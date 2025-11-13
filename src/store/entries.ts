@@ -6,6 +6,7 @@ type EntriesState = {
     entries: TimelineEntryData[];
     addEntry: (e: Omit<TimelineEntryData, "id">) => string;
     bulkAdd: (arr: Omit<TimelineEntryData, "id">[]) => void;
+    updateEntry: (id: string, newEntry: TimelineEntryData) => void;
     removeEntry: (id: string) => void;
     setStatus: (id: string, status: EntryStatus) => void;
     clearAll: () => void;
@@ -23,6 +24,13 @@ export const useEntriesStore = create<EntriesState>()(
             bulkAdd: (arr) => {
                 const withIds = arr.map((e) => ({ ...e, id: crypto.randomUUID() }));
                 set({ entries: [...withIds, ...get().entries] });
+            },
+            updateEntry: (id, newEntry) => {
+                set({
+                    entries: get().entries.map((en) =>
+                        en.id === id ? newEntry : en
+                    ),
+                });
             },
             setStatus: (id, status) => {
                 set({

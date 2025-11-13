@@ -37,6 +37,7 @@ export function AddEntryDialog({ onAddEntry, buttonClassName }: AddEntryDialogPr
   const [time, setTime] = useState("");
   const [provider, setProvider] = useState("");
   const [recurring, setRecurring] = useState(false);
+  const [recurrence, setRecurrence] = useState<TimelineEntryData['recurring']>('daily');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +59,7 @@ export function AddEntryDialog({ onAddEntry, buttonClassName }: AddEntryDialogPr
       status: "upcoming",
       provider: provider || undefined,
       date: date,
-      recurring: recurring,
+      recurring: recurring ? recurrence : undefined,
     });
 
     // Reset form
@@ -68,6 +69,7 @@ export function AddEntryDialog({ onAddEntry, buttonClassName }: AddEntryDialogPr
     setTime("");
     setProvider("");
     setRecurring(false);
+    setRecurrence('daily');
     setOpen(false);
   };
 
@@ -158,18 +160,28 @@ export function AddEntryDialog({ onAddEntry, buttonClassName }: AddEntryDialogPr
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="recurring"
-              checked={recurring}
-              onCheckedChange={(checked) => setRecurring(checked as boolean)}
-            />
-            <Label
-              htmlFor="recurring"
-              className="text-sm font-normal cursor-pointer"
-            >
-              This is a recurring event
-            </Label>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="recurring"
+                checked={recurring}
+                onCheckedChange={(checked) => setRecurring(checked as boolean)}
+              />
+              <Label htmlFor="recurring" className="text-sm font-normal cursor-pointer">
+                Recurring Event
+              </Label>
+            </div>
+            {recurring && (
+              <Select value={recurrence} onValueChange={(value) => setRecurrence(value as TimelineEntryData['recurring'])}>
+                <SelectTrigger id="recurrence" className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">

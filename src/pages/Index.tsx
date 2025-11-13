@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { TimelineEntry, TimelineEntryData, EntryStatus } from "@/components/TimelineEntry";
 import { ReminderSystem } from "@/components/ReminderSystem";
 import { AddEntryDialog } from "@/components/AddEntryDialog";
@@ -6,7 +6,8 @@ import { SummaryCard } from "@/components/SummaryCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarIcon, TrendingUp, CalendarDays } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, parseISO, isAfter, isEqual, getDay } from "date-fns";
+import { EditEntryDialog } from "@/components/EditEntryDialog";
 import { ChatbotWidget } from "@/components/ChatbotWidget";
 import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,11 +15,13 @@ import { useEntriesStore } from "@/store/entries";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [editingEntry, setEditingEntry] = useState<TimelineEntryData | null>(null);
 
   // 🔗 read/write global store
   const entries = useEntriesStore((s) => s.entries);
   const addEntry = useEntriesStore((s) => s.addEntry);
   const bulkAdd = useEntriesStore((s) => s.bulkAdd);
+  const updateEntry = useEntriesStore((s) => s.updateEntry);
   const setStatus = useEntriesStore((s) => s.setStatus);
   const removeEntry = useEntriesStore((s) => s.removeEntry);
 
@@ -80,20 +83,65 @@ const Index = () => {
     removeEntry(id);
   };
 
+  const handleUpdateEntry = useCallback(
+    (updatedEntry: TimelineEntryData) => {
+      updateEntry(updatedEntry.id, updatedEntry);
+      setEditingEntry(null); // Close dialog on save
+    },
+    [updateEntry]
+  );
+
   const selectedDateStr = useMemo(() => format(selectedDate, "yyyy-MM-dd"), [selectedDate]);
 
   const filteredEntries = useMemo(() => {
     const parseTime = (timeStr: string): number => {
       const [time, modifier] = timeStr.split(" ");
       let [hours, minutes] = time.split(":").map(Number);
-      if (modifier === "PM" && hours < 12) hours += 12;
-      if (modifier === "AM" && hours === 12) hours = 0;
+      if (modifier === "PM" && hours < 12) {
+        hours += 12;
+      }
+      if (modifier === "AM" && hours === 12) {
+        hours = 0;
+      }
       return hours * 60 + minutes;
     };
     return entries
-      .filter((e) => e.date === selectedDateStr)
+      .filter((e) => {
+        const entryDate = parseISO(e.date);
+        if (e.date === selectedDateStr) return true;
+        if (isAfter(selectedDate, entryDate)) {
+          if (e.recurring === 'daily') return true;
+          if (e.recurring === 'weekly' && getDay(selectedDate) === getDay(entryDate)) return true;
+        }
+        return false;
+      })
       .sort((a, b) => parseTime(a.time) - parseTime(b.time));
   }, [entries, selectedDateStr]);
+
+  const todaysEntries = useMemo(() => {
+    const today = new Date();
+    const todayStr = format(today, "yyyy-MM-dd");
+    const parseTime = (timeStr: string): number => {
+      const [time, modifier] = timeStr.split(" ");
+      let [hours, minutes] = time.split(":").map(Number);
+      if (modifier === "PM" && hours < 12) {
+        hours += 12;
+      }
+      if (modifier === "AM" && hours === 12) {
+        hours = 0;
+      }
+      return hours * 60 + minutes;
+    };
+    return entries.filter((e) => {
+      const entryDate = parseISO(e.date);
+      if (e.date === todayStr) return true;
+      if (isAfter(today, entryDate) || isEqual(today, entryDate)) {
+        if (e.recurring === 'daily') return true;
+        if (e.recurring === 'weekly' && getDay(today) === getDay(entryDate)) return true;
+      }
+      return false;
+    }).sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  }, [entries]);
 
   const friendlyDate = useMemo(
     () =>
@@ -107,9 +155,9 @@ const Index = () => {
   );
 
   const tabConfig = [
-    { value: "timeline", label: "Today", Icon: CalendarIcon },
+    { value: "timeline", label: "Today", Icon: CalendarDays },
+    { value: "calendar", label: "Calendar", Icon: CalendarIcon },
     { value: "summary", label: "Summary", Icon: TrendingUp },
-    { value: "calendar", label: "Calendar", Icon: CalendarDays },
   ] as const;
 
   return (
@@ -120,13 +168,13 @@ const Index = () => {
         <main className="mx-auto flex max-w-6xl flex-col gap-8">
           <Tabs defaultValue="timeline" className="space-y-8">
             {/* HERO (plain; no glass wrapper) */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-1">
-                <span className="text-sm font-semibold tracking-tight text-slate-700">Lifeline-</span>
+            <div className="flex flex-col gap-2">
+              <div className="space-y-0">
+                <span className="text-lg font-semibold tracking-tight text-slate-700">Lifeline-</span>
                 <h1 className="font-semibold text-[44px] leading-[1.05] text-[#0F1729] sm:text-[64px]">
                   Welcome Back
                 </h1>
-                <p className="text-[15px] text-slate-600">
+                <p className="text-lg text-slate-600">
                   See what’s happening across your health: daily updates to your complete health picture.
                 </p>
               </div>
@@ -155,8 +203,8 @@ const Index = () => {
 
             <TabsContent value="timeline">
               <section
-                className="rounded-2xl border border-white/55
-                bg-[linear-gradient(135deg,hsl(216_100%_97%/.92),hsl(274_100%_96%/.92))]
+                className="rounded-3xl border border-white/50
+                bg-white/40
                 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur"
               >
                 <div className="space-y-1">
@@ -170,23 +218,25 @@ const Index = () => {
                       <p className="mt-2 text-sm text-slate-500">
                         Start tracking medications, labs, or appointments to fill your day.
                       </p>
-                      <div className="mt-6 flex justify-center">
-                        <AddEntryDialog
-                          onAddEntry={handleAddEntry}
-                          buttonClassName="rounded-lg bg-slate-900/90 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-slate-900"
-                        />
-                      </div>
                     </div>
-                  ) : (
+                  ) : todaysEntries.length > 0 ? (
                     filteredEntries.map((entry, index) => (
                       <TimelineEntry
                         key={entry.id}
                         entry={entry}
                         isLast={index === filteredEntries.length - 1}
                         onStatusChange={handleStatusChange}
+                        onEdit={() => setEditingEntry(entry)}
                         onRemove={handleRemoveEntry}
                       />
                     ))
+                  ) : (
+                    <div className="rounded-xl border border-white/60 bg-white/90 p-6 text-center shadow-[0_14px_36px_rgba(15,23,42,0.08)]">
+                      <p className="text-lg font-semibold text-slate-700">All clear for today!</p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        You have no entries scheduled for today.
+                      </p>
+                    </div>
                   )}
                 </div>
               </section>
@@ -198,17 +248,37 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="calendar">
-              <section className="rounded-xl border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <div className="mb-6 space-y-1">
-                <h2 className="text-2xl font-semibold text-slate-900">Select a Date</h2>
-                <p className="text-sm text-slate-600">Choose a date to view its detailed timeline.</p>
-              </div>
-                <div className="flex justify-center">
+              <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-1">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
-                    className="rounded-xl border border-white/70 bg-white"
+                    className="rounded-xl border bg-card"
                   />
+                </div>
+                <div className="lg:col-span-2">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-semibold text-slate-900">{friendlyDate}</h2>
+                  </div>
+                  <div className="mt-6 space-y-4">
+                    {filteredEntries.length > 0 ? (
+                      filteredEntries.map((entry, index) => (
+                        <TimelineEntry
+                          key={entry.id}
+                          entry={entry}
+                          isLast={index === filteredEntries.length - 1}
+                          onStatusChange={handleStatusChange}
+                          onEdit={() => setEditingEntry(entry)}
+                          onRemove={handleRemoveEntry}
+                        />
+                      ))
+                    ) : (
+                      <div className="rounded-xl border bg-card p-6 text-center">
+                        <p className="font-semibold text-foreground">No entries for this day.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
             </TabsContent>

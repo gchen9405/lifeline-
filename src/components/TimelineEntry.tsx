@@ -1,5 +1,5 @@
 import {
-  Pill, Calendar, FlaskConical, CheckCircle2, XCircle, Clock, LucideIcon, Trash2,
+  Pill, Calendar, FlaskConical, CheckCircle2, XCircle, Clock, LucideIcon, Trash2, Edit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,13 +12,14 @@ export interface TimelineEntryData {
   time: string;
   status: EntryStatus;
   provider?: string;
-  date?: string;
-  recurring?: boolean;
+  date: string;
+  recurring?: 'daily' | 'weekly';
 }
 
 interface TimelineEntryProps {
   entry: TimelineEntryData;
   onStatusChange: (id: string, newStatus: EntryStatus) => void;
+  onEdit: (id: string) => void;
   onRemove: (id: string) => void;
   isLast?: boolean;
 }
@@ -53,7 +54,7 @@ const getStatusToggle = (type: TimelineEntryData["type"], status: EntryStatus): 
   return { label: "", next: status };
 };
 
-export const TimelineEntry = ({ entry, onStatusChange, onRemove, isLast }: TimelineEntryProps) => {
+export const TimelineEntry = ({ entry, onStatusChange, onEdit, onRemove, isLast }: TimelineEntryProps) => {
   const isToggleable = entry.type === "medication" || entry.type === "appointment";
   const config = typeConfig[entry.type];
   const StatusIcon = statusIcons[entry.status];
@@ -66,7 +67,7 @@ export const TimelineEntry = ({ entry, onStatusChange, onRemove, isLast }: Timel
       {!isLast && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-[36px] top-[72px] h-[calc(100%-36px)] w-px bg-white/55"
+          className="pointer-events-none absolute left-[28px] top-[70px] h-[calc(100%-40px)] w-px bg-slate-300/70"
         />
       )}
 
@@ -98,6 +99,9 @@ export const TimelineEntry = ({ entry, onStatusChange, onRemove, isLast }: Timel
                 >
                   {statusToggle.label}
                 </button>
+              )}
+              {onEdit && (
+                <button type="button" onClick={() => onEdit(entry.id)} className="text-slate-400 hover:text-slate-700"><Edit className="h-4 w-4" /></button>
               )}
               <button type="button" onClick={() => onRemove(entry.id)} className="text-slate-400 hover:text-red-500">
                 <Trash2 className="h-4 w-4" />
