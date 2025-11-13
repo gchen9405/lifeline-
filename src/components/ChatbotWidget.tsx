@@ -54,7 +54,7 @@ export function ChatbotWidget() {
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen && (
         <div className="mb-4 w-80 rounded-lg border bg-card shadow-lg">
-          <div className="flex items-center justify-between border-b bg-medical-blue p-4">
+          <div className="flex items-center justify-between rounded-t-lg border-b bg-slate-900 p-4">
             <h3 className="font-semibold text-white">AI Assistant</h3>
             <Button size="icon" variant="ghost" onClick={() => setIsOpen(false)} className="text-white">
               <X className="h-4 w-4" />
@@ -102,7 +102,7 @@ export function ChatbotWidget() {
       <Button
         onClick={() => setIsOpen(!isOpen)}
         size="icon"
-        className={cn("h-14 w-14 rounded-full shadow-lg transition-all", isOpen && "rotate-0")}
+        className={cn("h-14 w-14 rounded-full shadow-lg transition-all bg-slate-900 hover:bg-slate-800", isOpen && "rotate-0")}
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </Button>

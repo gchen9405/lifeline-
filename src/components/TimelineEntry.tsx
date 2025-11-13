@@ -1,5 +1,5 @@
 import {
-  Pill, Calendar, FlaskConical, CheckCircle2, XCircle, Clock, LucideIcon,
+  Pill, Calendar, FlaskConical, CheckCircle2, XCircle, Clock, LucideIcon, Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ export interface TimelineEntryData {
 interface TimelineEntryProps {
   entry: TimelineEntryData;
   onStatusChange: (id: string, newStatus: EntryStatus) => void;
+  onRemove: (id: string) => void;
   isLast?: boolean;
 }
 
@@ -52,7 +53,7 @@ const getStatusToggle = (type: TimelineEntryData["type"], status: EntryStatus): 
   return { label: "", next: status };
 };
 
-export const TimelineEntry = ({ entry, onStatusChange, isLast }: TimelineEntryProps) => {
+export const TimelineEntry = ({ entry, onStatusChange, onRemove, isLast }: TimelineEntryProps) => {
   const isToggleable = entry.type === "medication" || entry.type === "appointment";
   const config = typeConfig[entry.type];
   const StatusIcon = statusIcons[entry.status];
@@ -71,8 +72,8 @@ export const TimelineEntry = ({ entry, onStatusChange, isLast }: TimelineEntryPr
 
       {/* left rail icon */}
       <div className="relative flex flex-col items-center">
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg ring-1 ring-white/60">
-          <div className={cn("flex h-11 w-11 items-center justify-center rounded-full border bg-gradient-to-br", config.indicator)}>
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-white/60">
+          <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl border bg-gradient-to-br", config.indicator)}>
             <config.icon className={cn("h-5 w-5", config.accent)} />
           </div>
         </div>
@@ -80,23 +81,29 @@ export const TimelineEntry = ({ entry, onStatusChange, isLast }: TimelineEntryPr
 
       {/* card */}
       <div className="flex-1">
-        <div className="rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)]">
+        <div className="rounded-2xl border border-white/60 bg-white/90 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)]">
           {/* top row — small time + status chip; action at far right */}
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-slate-500">{entry.time}</span>
-            <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", statusMeta.chip)}>
+            <span className={cn("inline-flex items-center gap-1 rounded-md px-3 py-1 text-xs font-semibold", statusMeta.chip)}>
               <StatusIcon className="h-3.5 w-3.5" />
               {statusMeta.label}
             </span>
-            {isToggleable && statusToggle.label && (
-              <button
-                type="button"
-                onClick={() => onStatusChange(entry.id, statusToggle.next)}
-                className="ml-auto text-xs font-semibold text-slate-500 hover:text-slate-900"
-              >
-                {statusToggle.label}
+            <div className="ml-auto flex items-center gap-4">
+              {isToggleable && statusToggle.label && (
+                <button
+                  type="button"
+                  onClick={() => onStatusChange(entry.id, statusToggle.next)}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-900"
+                >
+                  {statusToggle.label}
+                </button>
+              )}
+              <button type="button" onClick={() => onRemove(entry.id)} className="text-slate-400 hover:text-red-500">
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Remove entry</span>
               </button>
-            )}
+            </div>
           </div>
 
           {/* title + description */}

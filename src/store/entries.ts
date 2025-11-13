@@ -6,8 +6,8 @@ type EntriesState = {
     entries: TimelineEntryData[];
     addEntry: (e: Omit<TimelineEntryData, "id">) => string;
     bulkAdd: (arr: Omit<TimelineEntryData, "id">[]) => void;
-    setStatus: (id: string, status: EntryStatus) => void;
     removeEntry: (id: string) => void;
+    setStatus: (id: string, status: EntryStatus) => void;
     clearAll: () => void;
 };
 

@@ -20,6 +20,7 @@ const Index = () => {
   const addEntry = useEntriesStore((s) => s.addEntry);
   const bulkAdd = useEntriesStore((s) => s.bulkAdd);
   const setStatus = useEntriesStore((s) => s.setStatus);
+  const removeEntry = useEntriesStore((s) => s.removeEntry);
 
   // Seed demo data once if store is empty
   useEffect(() => {
@@ -75,6 +76,10 @@ const Index = () => {
     setStatus(id, status);
   };
 
+  const handleRemoveEntry = (id: string) => {
+    removeEntry(id);
+  };
+
   const selectedDateStr = useMemo(() => format(selectedDate, "yyyy-MM-dd"), [selectedDate]);
 
   const filteredEntries = useMemo(() => {
@@ -118,38 +123,39 @@ const Index = () => {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
                 <span className="text-sm font-semibold tracking-tight text-slate-700">Lifeline-</span>
-                <h1 className="font-semibold text-[40px] leading-[1.05] text-[#0F1729] sm:text-[56px]">
+                <h1 className="font-semibold text-[44px] leading-[1.05] text-[#0F1729] sm:text-[64px]">
                   Welcome Back
                 </h1>
                 <p className="text-[15px] text-slate-600">
                   See what’s happening across your health: daily updates to your complete health picture.
                 </p>
               </div>
+            </div>
 
+            <div className="flex items-center justify-between">
+              {/* Segmented tabs (compact) */}
+              <TabsList className="mt-1 inline-flex rounded-lg bg-white/70 p-1 ring-1 ring-black/5 shadow-sm backdrop-blur">
+                {tabConfig.map(({ value, label, Icon }) => (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition
+                               data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
               <AddEntryDialog
                 onAddEntry={handleAddEntry}
-                buttonClassName="rounded-full bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-xl transition hover:bg-slate-900/90"
+                buttonClassName="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-900/90"
               />
             </div>
 
-            {/* Segmented tabs (compact) */}
-            <TabsList className="mt-1 inline-flex rounded-full bg-white/70 p-1 ring-1 ring-black/5 shadow-sm backdrop-blur">
-              {tabConfig.map(({ value, label, Icon }) => (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                  className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition
-                             data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow"
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
             <TabsContent value="timeline">
               <section
-                className="rounded-[28px] border border-white/55
+                className="rounded-2xl border border-white/55
                 bg-[linear-gradient(135deg,hsl(216_100%_97%/.92),hsl(274_100%_96%/.92))]
                 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur"
               >
@@ -160,14 +166,14 @@ const Index = () => {
 
                 <div className="mt-10 space-y-10">
                   {filteredEntries.length === 0 ? (
-                    <div className="rounded-[24px] border border-white/60 bg-white/90 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)]">                      <p className="text-lg font-semibold text-slate-700">No entries yet</p>
+                    <div className="rounded-xl border border-white/60 bg-white/90 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)]">                      <p className="text-lg font-semibold text-slate-700">No entries yet</p>
                       <p className="mt-2 text-sm text-slate-500">
                         Start tracking medications, labs, or appointments to fill your day.
                       </p>
                       <div className="mt-6 flex justify-center">
                         <AddEntryDialog
                           onAddEntry={handleAddEntry}
-                          buttonClassName="rounded-full bg-slate-900/90 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-slate-900"
+                          buttonClassName="rounded-lg bg-slate-900/90 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-slate-900"
                         />
                       </div>
                     </div>
@@ -178,6 +184,7 @@ const Index = () => {
                         entry={entry}
                         isLast={index === filteredEntries.length - 1}
                         onStatusChange={handleStatusChange}
+                        onRemove={handleRemoveEntry}
                       />
                     ))
                   )}
@@ -186,12 +193,12 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="summary">
-              <section className="rounded-[24px] border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <SummaryCard entries={entries} />
+              <section className="rounded-xl border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <SummaryCard entries={entries} />
               </section>
             </TabsContent>
 
             <TabsContent value="calendar">
-              <section className="rounded-[24px] border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <div className="mb-6 space-y-1">
+              <section className="rounded-xl border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <div className="mb-6 space-y-1">
                 <h2 className="text-2xl font-semibold text-slate-900">Select a Date</h2>
                 <p className="text-sm text-slate-600">Choose a date to view its detailed timeline.</p>
               </div>
@@ -200,7 +207,7 @@ const Index = () => {
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
-                    className="rounded-2xl border border-white/70 bg-white"
+                    className="rounded-xl border border-white/70 bg-white"
                   />
                 </div>
               </section>

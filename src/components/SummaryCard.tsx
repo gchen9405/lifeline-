@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Share2 } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { TimelineEntryData } from "./TimelineEntry";
 import { toast } from "sonner";
 
@@ -19,10 +19,6 @@ export function SummaryCard({ entries }: SummaryCardProps) {
 
   const handleExport = () => {
     toast.success("Summary exported successfully");
-  };
-
-  const handleShare = () => {
-    toast.success("Sharing link copied to clipboard");
   };
 
   return (

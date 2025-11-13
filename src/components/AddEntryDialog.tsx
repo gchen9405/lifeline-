@@ -43,11 +43,18 @@ export function AddEntryDialog({ onAddEntry, buttonClassName }: AddEntryDialogPr
 
     if (!title || !description || !date || !time) return;
 
+    // Format time to AM/PM
+    const [hours, minutes] = time.split(":");
+    const hoursNum = parseInt(hours, 10);
+    const ampm = hoursNum >= 12 ? "PM" : "AM";
+    const formattedHours = hoursNum % 12 || 12; // Convert 0 to 12 for 12 AM
+    const formattedTime = `${String(formattedHours).padStart(2, '0')}:${minutes} ${ampm}`;
+
     onAddEntry({
       type,
       title,
       description,
-      time,
+      time: formattedTime,
       status: "upcoming",
       provider: provider || undefined,
       date: date,
