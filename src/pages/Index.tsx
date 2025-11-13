@@ -8,7 +8,7 @@ import { Calendar as CalendarIcon, TrendingUp, CalendarDays } from "lucide-react
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { ChatbotWidget } from "@/components/ChatbotWidget";
-import { Toaster as Sonner, toast } from "sonner";
+import { Toaster as Sonner } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEntriesStore } from "@/store/entries";
 
@@ -30,7 +30,7 @@ const Index = () => {
           type: "medication",
           title: "Morning Medication - Lisinopril 10mg",
           description: "Blood pressure medication prescribed by Dr. Johnson",
-          time: "08:00 AM", // Note: `status` is now 'taken'
+          time: "08:00 AM",
           status: "taken",
           provider: "Dr. Johnson (Primary Care)",
           date: today,
@@ -48,7 +48,7 @@ const Index = () => {
           type: "lab",
           title: "Returned Lab Result",
           description: "Fasting glucose: 105 mg/dL (normal range)",
-          time: "07:30 AM", // Note: `status` is now 'returned'
+          time: "07:30 AM",
           status: "returned",
           provider: "City Hospital Lab",
           date: today,
@@ -77,123 +77,137 @@ const Index = () => {
 
   const selectedDateStr = useMemo(() => format(selectedDate, "yyyy-MM-dd"), [selectedDate]);
 
-  const filteredEntries = useMemo(
-    () => {
-      const parseTime = (timeStr: string): number => {
-        const [time, modifier] = timeStr.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
-        if (modifier === "PM" && hours < 12) {
-          hours += 12;
-        }
-        if (modifier === "AM" && hours === 12) {
-          hours = 0;
-        }
-        return hours * 60 + minutes;
-      };
-      return entries.filter((e) => e.date === selectedDateStr).sort((a, b) => parseTime(a.time) - parseTime(b.time));
-    },
-    [entries, selectedDateStr]
+  const filteredEntries = useMemo(() => {
+    const parseTime = (timeStr: string): number => {
+      const [time, modifier] = timeStr.split(" ");
+      let [hours, minutes] = time.split(":").map(Number);
+      if (modifier === "PM" && hours < 12) hours += 12;
+      if (modifier === "AM" && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    };
+    return entries
+      .filter((e) => e.date === selectedDateStr)
+      .sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  }, [entries, selectedDateStr]);
+
+  const friendlyDate = useMemo(
+    () =>
+      selectedDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+    [selectedDate]
   );
+
+  const tabConfig = [
+    { value: "timeline", label: "Today", Icon: CalendarIcon },
+    { value: "summary", label: "Summary", Icon: TrendingUp },
+    { value: "calendar", label: "Calendar", Icon: CalendarDays },
+  ] as const;
 
   return (
     <TooltipProvider>
       <Sonner />
       <ReminderSystem />
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center justify-between">
+      <div className="min-h-screen px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+        <main className="mx-auto flex max-w-6xl flex-col gap-8">
+          <Tabs defaultValue="timeline" className="space-y-8">
+            {/* HERO (plain; no glass wrapper) */}
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
-                <h1 className="text-3xl font-bold text-foreground">Micro-Timeline</h1>
-                <p className="text-sm text-muted-foreground">
-                  Your unified health journey across all providers
+                <span className="text-sm font-semibold tracking-tight text-slate-700">Lifeline-</span>
+                <h1 className="font-semibold text-[40px] leading-[1.05] text-[#0F1729] sm:text-[56px]">
+                  Welcome Back
+                </h1>
+                <p className="text-[15px] text-slate-600">
+                  See what’s happening across your health: daily updates to your complete health picture.
                 </p>
               </div>
-              <AddEntryDialog onAddEntry={handleAddEntry} />
-            </div>
-          </div>
-        </header>
 
-        {/* Main Content */}
-        <main className="container mx-auto px-4 py-8">
-          <Tabs defaultValue="timeline" className="space-y-6">
-            <TabsList className="grid w-full max-w-2xl grid-cols-3">
-              <TabsTrigger value="timeline" className="gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                Timeline
-              </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-2">
-                <CalendarDays className="h-4 w-4" />
-                Calendar
-              </TabsTrigger>
-              <TabsTrigger value="summary" className="gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Summary
-              </TabsTrigger>
+              <AddEntryDialog
+                onAddEntry={handleAddEntry}
+                buttonClassName="rounded-full bg-slate-900 px-6 py-3 text-base font-semibold text-white shadow-xl transition hover:bg-slate-900/90"
+              />
+            </div>
+
+            {/* Segmented tabs (compact) */}
+            <TabsList className="mt-1 inline-flex rounded-full bg-white/70 p-1 ring-1 ring-black/5 shadow-sm backdrop-blur">
+              {tabConfig.map(({ value, label, Icon }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition
+                             data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
-            <TabsContent value="timeline" className="space-y-6">
-              <div className="rounded-lg border bg-card/50 p-6">
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">Timeline</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
+            <TabsContent value="timeline">
+              <section
+                className="rounded-[28px] border border-white/55
+                bg-[linear-gradient(135deg,hsl(216_100%_97%/.92),hsl(274_100%_96%/.92))]
+                p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur"
+              >
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Today</p>
+                  <h2 className="text-2xl md:text-3xl font-semibold text-slate-900">{friendlyDate}</h2>
                 </div>
 
-                {filteredEntries.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground mb-4">No entries yet</p>
-                    <AddEntryDialog onAddEntry={handleAddEntry} />
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    {filteredEntries.map((entry) => (
+                <div className="mt-10 space-y-10">
+                  {filteredEntries.length === 0 ? (
+                    <div className="rounded-[24px] border border-white/60 bg-white/90 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)]">                      <p className="text-lg font-semibold text-slate-700">No entries yet</p>
+                      <p className="mt-2 text-sm text-slate-500">
+                        Start tracking medications, labs, or appointments to fill your day.
+                      </p>
+                      <div className="mt-6 flex justify-center">
+                        <AddEntryDialog
+                          onAddEntry={handleAddEntry}
+                          buttonClassName="rounded-full bg-slate-900/90 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-slate-900"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    filteredEntries.map((entry, index) => (
                       <TimelineEntry
                         key={entry.id}
                         entry={entry}
+                        isLast={index === filteredEntries.length - 1}
                         onStatusChange={handleStatusChange}
                       />
-                    ))}
-                  </div>
-                )}
-              </div>
+                    ))
+                  )}
+                </div>
+              </section>
             </TabsContent>
 
-            <TabsContent value="calendar" className="space-y-6">
-              <div className="rounded-lg border bg-card/50 p-6">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-foreground mb-2">Select Date</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Choose a date to view its timeline
-                  </p>
-                </div>
+            <TabsContent value="summary">
+              <section className="rounded-[24px] border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <SummaryCard entries={entries} />
+              </section>
+            </TabsContent>
+
+            <TabsContent value="calendar">
+              <section className="rounded-[24px] border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <div className="mb-6 space-y-1">
+                <h2 className="text-2xl font-semibold text-slate-900">Select a Date</h2>
+                <p className="text-sm text-slate-600">Choose a date to view its detailed timeline.</p>
+              </div>
                 <div className="flex justify-center">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
-                    className="rounded-md border"
+                    className="rounded-2xl border border-white/70 bg-white"
                   />
                 </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="summary" className="space-y-6">
-              <SummaryCard entries={entries} />
+              </section>
             </TabsContent>
           </Tabs>
         </main>
 
-        {/* Chatbot can now read the global store directly */}
         <ChatbotWidget />
       </div>
     </TooltipProvider>

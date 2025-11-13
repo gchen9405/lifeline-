@@ -42,10 +42,6 @@ export function SummaryCard({ entries }: SummaryCardProps) {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button size="sm" onClick={handleShare} className="gap-2">
-            <Share2 className="h-4 w-4" />
-            Share
-          </Button>
         </div>
       </div>
 

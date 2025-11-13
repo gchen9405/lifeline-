@@ -1,14 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* =========================
+   Design tokens (HSL only)
+   ========================= */
 @layer base {
   :root {
     --background: 210 40% 98%;
+    /* #0F1729 ≈ hsl(222 47% 11%) */
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -37,41 +39,18 @@ All colors MUST be HSL.
     --ring: 217 91% 60%;
 
     --radius: 0.75rem;
-    
+
     --success: 152 69% 31%;
     --success-foreground: 0 0% 100%;
-    
+
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    
+
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
-    
+
     --gradient-card: linear-gradient(135deg, hsl(217 91% 60% / 0.05), hsl(271 81% 56% / 0.05));
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(199 89% 48%));
-    
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1);
-    
-    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -102,39 +81,58 @@ All colors MUST be HSL.
     --border: 217 33% 18%;
     --input: 217 33% 18%;
     --ring: 217 91% 60%;
-    
-    --success: 152 69% 31%;
-    --success-foreground: 0 0% 100%;
-    
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
-    
-    --gradient-card: linear-gradient(135deg, hsl(217 91% 60% / 0.1), hsl(271 81% 56% / 0.1));
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(199 89% 48%));
-    
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.2);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3);
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
+/* =========================
+   Base + Background Blobs
+   ========================= */
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    /* cooler base wash, fairly light */
+    background: linear-gradient(180deg, hsl(223 100% 95%) 0%, hsl(270 100% 95%) 100%);
+    @apply text-foreground min-h-screen antialiased;
+  }
+
+  /* darker, more saturated blobs */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -10%;
+    z-index: -2;
+    background:
+      /* strong blue, top-left */
+      radial-gradient(1050px 780px at 0% 0%,
+        hsl(217 92% 62% / 0.95),
+        transparent 60%),
+      /* strong purple, mid-right */
+      radial-gradient(1100px 820px at 100% 25%,
+        hsl(274 90% 64% / 0.95),
+        transparent 58%),
+      /* soft lavender along the bottom-left */
+      radial-gradient(1000px 780px at 0% 100%,
+        hsl(235 90% 80% / 0.55),
+        transparent 60%);
+    filter: blur(4px);
+    pointer-events: none;
+  }
+
+  /* subtle vignette so edges feel deeper and center stays bright */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(1200px 900px at 50% 18%,
+        transparent 55%,
+        hsl(240 33% 10% / 0.10) 100%);
+    pointer-events: none;
   }
 }

@@ -21,12 +21,14 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { TimelineEntryData } from "./TimelineEntry";
+import { cn } from "@/lib/utils";
 
 interface AddEntryDialogProps {
   onAddEntry: (entry: Omit<TimelineEntryData, "id">) => void;
+  buttonClassName?: string;
 }
 
-export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
+export function AddEntryDialog({ onAddEntry, buttonClassName }: AddEntryDialogProps) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<TimelineEntryData["type"]>("medication");
   const [title, setTitle] = useState("");
@@ -65,7 +67,7 @@ export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2">
+        <Button size="lg" className={cn("gap-2", buttonClassName)}>
           <Plus className="h-5 w-5" />
           Add Entry
         </Button>
