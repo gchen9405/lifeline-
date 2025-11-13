@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-import { EntryType, TimelineEntryData } from "./TimelineEntry";
+import { TimelineEntryData } from "./TimelineEntry";
 
 interface AddEntryDialogProps {
   onAddEntry: (entry: Omit<TimelineEntryData, "id">) => void;
@@ -28,7 +28,7 @@ interface AddEntryDialogProps {
 
 export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<EntryType>("medication");
+  const [type, setType] = useState<TimelineEntryData["type"]>("medication");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
@@ -38,7 +38,7 @@ export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !description || !date || !time) return;
 
     onAddEntry({
@@ -80,7 +80,7 @@ export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="type">Entry Type</Label>
-            <Select value={type} onValueChange={(value) => setType(value as EntryType)}>
+            <Select value={type} onValueChange={(value) => setType(value as TimelineEntryData["type"])}>
               <SelectTrigger id="type">
                 <SelectValue />
               </SelectTrigger>

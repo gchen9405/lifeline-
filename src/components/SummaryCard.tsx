@@ -14,7 +14,7 @@ export function SummaryCard({ entries }: SummaryCardProps) {
   const labResults = entries.filter(e => e.type === "lab");
   const appointments = entries.filter(e => e.type === "appointment");
 
-  const completedMeds = medications.filter(m => m.status === "completed").length;
+  const completedMeds = medications.filter(m => m.status === "taken").length;
   const missedMeds = medications.filter(m => m.status === "missed").length;
 
   const handleExport = () => {
@@ -101,8 +101,8 @@ export function SummaryCard({ entries }: SummaryCardProps) {
                   entry.status === "completed"
                     ? "bg-success text-success-foreground"
                     : entry.status === "missed"
-                    ? "bg-destructive text-destructive-foreground"
-                    : "bg-muted text-muted-foreground"
+                      ? "bg-destructive text-destructive-foreground"
+                      : "bg-muted text-muted-foreground"
                 }
               >
                 {entry.status}

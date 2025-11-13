@@ -30,8 +30,8 @@ const Index = () => {
           type: "medication",
           title: "Morning Medication - Lisinopril 10mg",
           description: "Blood pressure medication prescribed by Dr. Johnson",
-          time: "08:00 AM",
-          status: "completed",
+          time: "08:00 AM", // Note: `status` is now 'taken'
+          status: "taken",
           provider: "Dr. Johnson (Primary Care)",
           date: today,
         },
@@ -48,8 +48,8 @@ const Index = () => {
           type: "lab",
           title: "Returned Lab Result",
           description: "Fasting glucose: 105 mg/dL (normal range)",
-          time: "07:30 AM",
-          status: "completed",
+          time: "07:30 AM", // Note: `status` is now 'returned'
+          status: "returned",
           provider: "City Hospital Lab",
           date: today,
         },
@@ -78,7 +78,20 @@ const Index = () => {
   const selectedDateStr = useMemo(() => format(selectedDate, "yyyy-MM-dd"), [selectedDate]);
 
   const filteredEntries = useMemo(
-    () => entries.filter((e) => e.date === selectedDateStr),
+    () => {
+      const parseTime = (timeStr: string): number => {
+        const [time, modifier] = timeStr.split(" ");
+        let [hours, minutes] = time.split(":").map(Number);
+        if (modifier === "PM" && hours < 12) {
+          hours += 12;
+        }
+        if (modifier === "AM" && hours === 12) {
+          hours = 0;
+        }
+        return hours * 60 + minutes;
+      };
+      return entries.filter((e) => e.date === selectedDateStr).sort((a, b) => parseTime(a.time) - parseTime(b.time));
+    },
     [entries, selectedDateStr]
   );
 

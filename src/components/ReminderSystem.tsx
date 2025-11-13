@@ -27,7 +27,7 @@ export function ReminderSystem() {
 
                 // Don't remind for entries that are already handled, have no time, or are not upcoming/pending.
                 if (
-                    (entry.status !== "pending" && entry.status !== "upcoming") ||
+                    (entry.status !== "upcoming") ||
                     !entry.date ||
                     !entry.time
                 ) {
