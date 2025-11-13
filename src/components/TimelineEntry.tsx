@@ -133,9 +133,9 @@ export function TimelineEntry({ entry, onStatusChange }: TimelineEntryProps) {
                   <Clock className="h-4 w-4" />
                   <span>{entry.time}</span>
                 </div>
-                {(entry.type === "lab" || 
+                {entry.type !== "lab" && 
                   ((entry.type === "medication" || entry.type === "appointment") && 
-                   entry.status === "completed")) && (
+                   entry.status === "completed") && (
                   <Badge variant={status.variant} className="gap-1.5">
                     <StatusIcon className="h-3 w-3" />
                     {status.label}
