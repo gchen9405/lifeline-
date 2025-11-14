@@ -100,7 +100,6 @@
 - `TrendingUp` - Summary/analytics view
 - `Plus` - Add new entry action
 - `Download` - Export functionality
-- `Share2` - Share/send functionality
 
 ## Design Principles
 

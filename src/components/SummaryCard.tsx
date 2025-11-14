@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Download, Share2 } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { TimelineEntryData } from "./TimelineEntry";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
@@ -15,7 +15,7 @@ export function SummaryCard({ entries }: SummaryCardProps) {
   const labResults = entries.filter(e => e.type === "lab");
   const appointments = entries.filter(e => e.type === "appointment");
 
-  const completedMeds = medications.filter(m => m.status === "completed").length;
+  const completedMeds = medications.filter(m => m.status === "taken").length;
   const missedMeds = medications.filter(m => m.status === "missed").length;
 
   const handleExport = () => {
@@ -164,12 +164,8 @@ export function SummaryCard({ entries }: SummaryCardProps) {
     }
   };
 
-  const handleShare = () => {
-    toast.success("Sharing link copied to clipboard");
-  };
-
   return (
-    <Card className="p-6 space-y-6">
+    <Card className="space-y-6 rounded-2xl border border-white/60 bg-white/75 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] backdrop-blur-sm">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -185,15 +181,11 @@ export function SummaryCard({ entries }: SummaryCardProps) {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button size="sm" onClick={handleShare} className="gap-2">
-            <Share2 className="h-4 w-4" />
-            Share
-          </Button>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border bg-card p-4 space-y-2">
+        <div className="space-y-2 rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm">
           <p className="text-sm font-medium text-muted-foreground">Medications</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-bold text-foreground">{medications.length}</p>
@@ -208,12 +200,12 @@ export function SummaryCard({ entries }: SummaryCardProps) {
           </div>
         </div>
 
-        <div className="rounded-lg border bg-card p-4 space-y-2">
+        <div className="space-y-2 rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm">
           <p className="text-sm font-medium text-muted-foreground">Lab Results</p>
           <p className="text-3xl font-bold text-foreground">{labResults.length}</p>
         </div>
 
-        <div className="rounded-lg border bg-card p-4 space-y-2">
+        <div className="space-y-2 rounded-xl border border-white/60 bg-white/80 p-4 shadow-sm">
           <p className="text-sm font-medium text-muted-foreground">Appointments</p>
           <p className="text-3xl font-bold text-foreground">{appointments.length}</p>
         </div>
@@ -233,7 +225,7 @@ export function SummaryCard({ entries }: SummaryCardProps) {
           {entries.slice(0, 5).map((entry) => (
             <div
               key={entry.id}
-              className="flex items-center justify-between rounded-md border bg-card p-3"
+              className="flex items-center justify-between rounded-xl border border-white/60 bg-white/80 p-3 shadow-sm"
             >
               <div>
                 <p className="font-medium text-sm text-foreground">{entry.title}</p>
@@ -252,6 +244,17 @@ export function SummaryCard({ entries }: SummaryCardProps) {
                   {entry.status}
                 </Badge>
               )}
+              <Badge
+                className={
+                  entry.status === "completed"
+                    ? "bg-success text-success-foreground"
+                    : entry.status === "missed"
+                      ? "bg-destructive text-destructive-foreground"
+                      : "bg-muted text-muted-foreground"
+                }
+              >
+                {entry.status}
+              </Badge>
             </div>
           ))}
         </div>

@@ -9,7 +9,7 @@ app.use(express.json());
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 if (!GEMINI_KEY) {
-    console.warn("⚠️  Missing GEMINI_API_KEY in .env");
+    console.warn("Missing GEMINI_API_KEY in .env");
 }
 
 // Normalize an ISO datetime from separate date/time strings if needed
@@ -135,4 +135,4 @@ You are Lifeline's on-device health schedule assistant.
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`🔊 API on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`API on http://localhost:${PORT}`));

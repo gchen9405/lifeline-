@@ -20,36 +20,46 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-import { EntryType, TimelineEntryData } from "./TimelineEntry";
+import { TimelineEntryData } from "./TimelineEntry";
+import { cn } from "@/lib/utils";
 
 interface AddEntryDialogProps {
   onAddEntry: (entry: Omit<TimelineEntryData, "id">) => void;
+  buttonClassName?: string;
 }
 
-export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
+export function AddEntryDialog({ onAddEntry, buttonClassName }: AddEntryDialogProps) {
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<EntryType>("medication");
+  const [type, setType] = useState<TimelineEntryData["type"]>("medication");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [provider, setProvider] = useState("");
   const [recurring, setRecurring] = useState(false);
+  const [recurrence, setRecurrence] = useState<TimelineEntryData['recurring']>('daily');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title || !description || !date || !time) return;
+
+    // Format time to AM/PM
+    const [hours, minutes] = time.split(":");
+    const hoursNum = parseInt(hours, 10);
+    const ampm = hoursNum >= 12 ? "PM" : "AM";
+    const formattedHours = hoursNum % 12 || 12; // Convert 0 to 12 for 12 AM
+    const formattedTime = `${String(formattedHours).padStart(2, '0')}:${minutes} ${ampm}`;
 
     onAddEntry({
       type,
       title,
       description,
-      time,
+      time: formattedTime,
       status: "upcoming",
       provider: provider || undefined,
       date: date,
-      recurring: recurring,
+      recurring: recurring ? recurrence : undefined,
     });
 
     // Reset form
@@ -59,13 +69,14 @@ export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
     setTime("");
     setProvider("");
     setRecurring(false);
+    setRecurrence('daily');
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2">
+        <Button size="lg" className={cn("gap-2", buttonClassName)}>
           <Plus className="h-5 w-5" />
           Add Entry
         </Button>
@@ -80,7 +91,7 @@ export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="type">Entry Type</Label>
-            <Select value={type} onValueChange={(value) => setType(value as EntryType)}>
+            <Select value={type} onValueChange={(value) => setType(value as TimelineEntryData["type"])}>
               <SelectTrigger id="type">
                 <SelectValue />
               </SelectTrigger>
@@ -149,18 +160,28 @@ export function AddEntryDialog({ onAddEntry }: AddEntryDialogProps) {
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="recurring"
-              checked={recurring}
-              onCheckedChange={(checked) => setRecurring(checked as boolean)}
-            />
-            <Label
-              htmlFor="recurring"
-              className="text-sm font-normal cursor-pointer"
-            >
-              This is a recurring event
-            </Label>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="recurring"
+                checked={recurring}
+                onCheckedChange={(checked) => setRecurring(checked as boolean)}
+              />
+              <Label htmlFor="recurring" className="text-sm font-normal cursor-pointer">
+                Recurring Event
+              </Label>
+            </div>
+            {recurring && (
+              <Select value={recurrence} onValueChange={(value) => setRecurrence(value as TimelineEntryData['recurring'])}>
+                <SelectTrigger id="recurrence" className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="flex justify-end gap-2">
