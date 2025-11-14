@@ -1,12 +1,27 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { TimelineEntry, TimelineEntryData, EntryStatus } from "@/components/TimelineEntry";
+import {
+  TimelineEntry,
+  TimelineEntryData,
+  EntryStatus,
+} from "@/components/TimelineEntry";
 import { ReminderSystem } from "@/components/ReminderSystem";
 import { AddEntryDialog } from "@/components/AddEntryDialog";
 import { SummaryCard } from "@/components/SummaryCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarIcon, TrendingUp, CalendarDays } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  TrendingUp,
+  CalendarDays,
+} from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO, isAfter, isEqual, getDay } from "date-fns";
+import {
+  format,
+  parseISO,
+  isAfter,
+  isEqual,
+  getDay,
+  addDays,
+} from "date-fns";
 import { EditEntryDialog } from "@/components/EditEntryDialog";
 import { ChatbotWidget } from "@/components/ChatbotWidget";
 import { Toaster as Sonner } from "sonner";
@@ -15,7 +30,8 @@ import { useEntriesStore } from "@/store/entries";
 
 const Index = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [editingEntry, setEditingEntry] = useState<TimelineEntryData | null>(null);
+  const [editingEntry, setEditingEntry] =
+    useState<TimelineEntryData | null>(null);
 
   // 🔗 read/write global store
   const entries = useEntriesStore((s) => s.entries);
@@ -25,46 +41,87 @@ const Index = () => {
   const setStatus = useEntriesStore((s) => s.setStatus);
   const removeEntry = useEntriesStore((s) => s.removeEntry);
 
-  // Seed demo data once if store is empty
+  // ---------- 1) Seed fixed mock data relative to "today" ----------
   useEffect(() => {
     if (entries.length === 0) {
-      const today = format(new Date(), "yyyy-MM-dd");
+      const now = new Date();
+      const d = (offset: number) =>
+        format(addDays(now, offset), "yyyy-MM-dd");
+
       bulkAdd([
-        {
-          type: "medication",
-          title: "Morning Medication - Lisinopril 10mg",
-          description: "Blood pressure medication prescribed by Dr. Johnson",
-          time: "08:00 AM",
-          status: "taken",
-          provider: "Dr. Johnson (Primary Care)",
-          date: today,
-        },
-        {
-          type: "medication",
-          title: "Evening Medication - Metformin 500mg",
-          description: "Diabetes medication prescribed by Dr. Smith",
-          time: "06:00 PM",
-          status: "missed",
-          provider: "Dr. Smith (Endocrinologist)",
-          date: today,
-        },
+        // Today
         {
           type: "lab",
           title: "Returned Lab Result",
           description: "Fasting glucose: 105 mg/dL (normal range)",
           time: "07:30 AM",
-          status: "returned",
+          status: "completed",
           provider: "City Hospital Lab",
-          date: today,
+          date: d(0),
+        },
+        {
+          type: "medication",
+          title: "Morning Medication – Lisinopril 10mg",
+          description: "Blood pressure medication prescribed by Dr. Johnson",
+          time: "08:00 AM",
+          status: "taken",
+          provider: "Dr. Johnson (Primary Care)",
+          date: d(0),
+          recurring: "weekly",
         },
         {
           type: "appointment",
           title: "Cardiology Follow-up",
           description: "Quarterly check-up with cardiologist",
           time: "10:00 AM",
-          status: "upcoming",
+          status: "completed",
           provider: "Dr. Williams (Cardiology)",
-          date: today,
+          date: d(0),
+        },
+
+        // Tomorrow
+        {
+          type: "medication",
+          title: "Evening Medication – Metformin 500mg",
+          description: "Diabetes medication prescribed by Dr. Smith",
+          time: "06:00 PM",
+          status: "taken",
+          provider: "Dr. Smith (Endocrinologist)",
+          date: d(1),
+          recurring: "weekly",
+        },
+        {
+          type: "appointment",
+          title: "Nutrition Counseling",
+          description: "Follow-up visit to review meal plan",
+          time: "02:00 PM",
+          status: "upcoming",
+          provider: "City Wellness Clinic",
+          date: d(1),
+        },
+
+        // +2 days
+        {
+          type: "medication",
+          title: "Morning Medication – Lisinopril 10mg",
+          description: "Blood pressure medication prescribed by Dr. Johnson",
+          time: "08:00 AM",
+          status: "taken",
+          provider: "Dr. Johnson (Primary Care)",
+          date: d(2),
+          recurring: "weekly",
+        },
+
+        // +3 days
+        {
+          type: "medication",
+          title: "Morning Medication – Lisinopril 10mg",
+          description: "Blood pressure medication prescribed by Dr. Johnson",
+          time: "08:00 AM",
+          status: "missed",
+          provider: "Dr. Johnson (Primary Care)",
+          date: d(3),
+          recurring: "weekly",
         },
       ]);
     }
@@ -91,59 +148,31 @@ const Index = () => {
     [updateEntry]
   );
 
-  const selectedDateStr = useMemo(() => format(selectedDate, "yyyy-MM-dd"), [selectedDate]);
+  // ---------- 2) "Real" today vs selected calendar date ----------
 
-  const filteredEntries = useMemo(() => {
-    const parseTime = (timeStr: string): number => {
-      const [time, modifier] = timeStr.split(" ");
-      let [hours, minutes] = time.split(":").map(Number);
-      if (modifier === "PM" && hours < 12) {
-        hours += 12;
-      }
-      if (modifier === "AM" && hours === 12) {
-        hours = 0;
-      }
-      return hours * 60 + minutes;
-    };
-    return entries
-      .filter((e) => {
-        const entryDate = parseISO(e.date);
-        if (e.date === selectedDateStr) return true;
-        if (isAfter(selectedDate, entryDate)) {
-          if (e.recurring === 'daily') return true;
-          if (e.recurring === 'weekly' && getDay(selectedDate) === getDay(entryDate)) return true;
-        }
-        return false;
-      })
-      .sort((a, b) => parseTime(a.time) - parseTime(b.time));
-  }, [entries, selectedDateStr]);
+  // real system "today"
+  const today = useMemo(() => new Date(), []);
+  const todayStr = useMemo(
+    () => format(today, "yyyy-MM-dd"),
+    [today]
+  );
+  const todayFriendly = useMemo(
+    () =>
+      today.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+    [today]
+  );
 
-  const todaysEntries = useMemo(() => {
-    const today = new Date();
-    const todayStr = format(today, "yyyy-MM-dd");
-    const parseTime = (timeStr: string): number => {
-      const [time, modifier] = timeStr.split(" ");
-      let [hours, minutes] = time.split(":").map(Number);
-      if (modifier === "PM" && hours < 12) {
-        hours += 12;
-      }
-      if (modifier === "AM" && hours === 12) {
-        hours = 0;
-      }
-      return hours * 60 + minutes;
-    };
-    return entries.filter((e) => {
-      const entryDate = parseISO(e.date);
-      if (e.date === todayStr) return true;
-      if (isAfter(today, entryDate) || isEqual(today, entryDate)) {
-        if (e.recurring === 'daily') return true;
-        if (e.recurring === 'weekly' && getDay(today) === getDay(entryDate)) return true;
-      }
-      return false;
-    }).sort((a, b) => parseTime(a.time) - parseTime(b.time));
-  }, [entries]);
-
-  const friendlyDate = useMemo(
+  // selected date for calendar view
+  const selectedDateStr = useMemo(
+    () => format(selectedDate, "yyyy-MM-dd"),
+    [selectedDate]
+  );
+  const selectedFriendly = useMemo(
     () =>
       selectedDate.toLocaleDateString("en-US", {
         weekday: "long",
@@ -152,6 +181,42 @@ const Index = () => {
         day: "numeric",
       }),
     [selectedDate]
+  );
+
+  const parseTime = (timeStr: string): number => {
+    const [time, modifier] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+    if (modifier === "PM" && hours < 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  };
+
+  // Entries strictly for *today* tab (always real today)
+  const todayEntries = useMemo(
+    () =>
+      entries
+        .filter((e) => e.date === todayStr)
+        .sort((a, b) => parseTime(a.time) - parseTime(b.time)),
+    [entries, todayStr]
+  );
+
+  // Entries for the *selected date* on the calendar tab
+  const selectedDayEntries = useMemo(
+    () =>
+      entries
+        .filter((e) => {
+          const entryDate = parseISO(e.date);
+          if (e.date === selectedDateStr) return true;
+
+          if (isAfter(selectedDate, entryDate) || isEqual(selectedDate, entryDate)) {
+            if (e.recurring === "daily") return true;
+            if (e.recurring === "weekly" && getDay(selectedDate) === getDay(entryDate))
+              return true;
+          }
+          return false;
+        })
+        .sort((a, b) => parseTime(a.time) - parseTime(b.time)),
+    [entries, selectedDate, selectedDateStr]
   );
 
   const tabConfig = [
@@ -164,22 +229,22 @@ const Index = () => {
     <TooltipProvider>
       <Sonner />
       <ReminderSystem />
-      <div className="min-h-screen px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-        {/* App name in top-left */}
-        <header className="mx-auto mb-6 flex max-w-6xl items-center">
-          <span className="text-lg font-semibold tracking-tight text-slate-700">
+      <div className="min-h-screen px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+        {/* App name pinned to top-left */}
+        <header className="mb-6 flex items-center">
+          <span className="font-semibold text-[32px] tracking-[-0.03em] text-[#0F1729]">
             Lifeline-
           </span>
         </header>
 
         <main className="mx-auto flex max-w-6xl flex-col gap-8">
           <Tabs defaultValue="timeline" className="space-y-8">
-            {/* HERO (now only Welcome Back + subtitle) */}
+            {/* HERO */}
             <div className="space-y-1">
-              <h1 className="font-semibold text-[44px] leading-[1.05] text-[#0F1729] sm:text-[64px]">
+              <h1 className="font-semibold text-[44px] leading-[1.02] tracking-[-0.04em] text-[#0F1729] sm:text-[64px]">
                 Welcome Back
               </h1>
-              <p className="text-lg text-slate-600">
+              <p className="text-[16px] font-medium tracking-[-0.02em] text-[#0F1729]">
                 See what’s happening across your health: daily updates to your complete health picture.
               </p>
             </div>
@@ -191,8 +256,8 @@ const Index = () => {
                   <TabsTrigger
                     key={value}
                     value={value}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition
-                   data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium tracking-[-0.01em] text-slate-600 transition
+                               data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow"
                   >
                     <Icon className="h-4 w-4" />
                     {label}
@@ -202,77 +267,83 @@ const Index = () => {
 
               <AddEntryDialog
                 onAddEntry={handleAddEntry}
-                buttonClassName="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-900/90"
+                buttonClassName="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-white shadow-lg transition hover:bg-slate-900/90"
               />
             </div>
 
+            {/* -------- TODAY TAB (real today only) -------- */}
             <TabsContent value="timeline">
-              <section
-                className="rounded-3xl border border-white/50
-                bg-white/40
-                p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur"
-              >
+              <section className="rounded-3xl border border-white/50 bg-white/40 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur">
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Today</p>
-                  <h2 className="text-2xl md:text-3xl font-semibold text-slate-900">{friendlyDate}</h2>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Today
+                  </p>
+                  <h2 className="text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-[#0F1729]">
+                    {todayFriendly}
+                  </h2>
                 </div>
 
                 <div className="mt-10 space-y-10">
-                  {filteredEntries.length === 0 ? (
-                    <div className="rounded-xl border border-white/60 bg-white/90 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)]">                      <p className="text-lg font-semibold text-slate-700">No entries yet</p>
+                  {todayEntries.length === 0 ? (
+                    <div className="rounded-xl border border-white/60 bg-white/90 p-6 shadow-[0_14px_36px_rgba(15,23,42,0.08)]">
+                      <p className="text-lg font-semibold text-slate-700">
+                        No entries yet
+                      </p>
                       <p className="mt-2 text-sm text-slate-500">
                         Start tracking medications, labs, or appointments to fill your day.
                       </p>
                     </div>
-                  ) : todaysEntries.length > 0 ? (
-                    filteredEntries.map((entry, index) => (
+                  ) : (
+                    todayEntries.map((entry, index) => (
                       <TimelineEntry
                         key={entry.id}
                         entry={entry}
-                        isLast={index === filteredEntries.length - 1}
+                        isLast={index === todayEntries.length - 1}
                         onStatusChange={handleStatusChange}
                         onEdit={() => setEditingEntry(entry)}
                         onRemove={handleRemoveEntry}
                       />
                     ))
-                  ) : (
-                    <div className="rounded-xl border border-white/60 bg-white/90 p-6 text-center shadow-[0_14px_36px_rgba(15,23,42,0.08)]">
-                      <p className="text-lg font-semibold text-slate-700">All clear for today!</p>
-                      <p className="mt-2 text-sm text-slate-500">
-                        You have no entries scheduled for today.
-                      </p>
-                    </div>
                   )}
                 </div>
               </section>
             </TabsContent>
 
+            {/* -------- SUMMARY TAB -------- */}
             <TabsContent value="summary">
               <section className="rounded-3xl border border-white/50 bg-white/40 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur">
                 <SummaryCard entries={entries} />
               </section>
             </TabsContent>
 
+            {/* -------- CALENDAR TAB (selected day) -------- */}
             <TabsContent value="calendar">
               <section className="grid gap-8 rounded-3xl border border-white/50 bg-white/40 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur lg:grid-cols-[1.1fr,2fr]">
-                {/* Calendar column */}
+                {/* Calendar column pinned to top */}
                 <div className="flex items-start justify-center">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
-                    className="w-full max-w-xs rounded-2xl border border-white/60 bg-white/80 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.09)] backdrop-blur-sm"
+                    className="w-full max-w-sm rounded-2xl border border-white/60 bg-white/80 px-4 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.09)] backdrop-blur-sm"
                     classNames={{
                       months: "space-y-4",
-                      caption: "flex justify-center pt-1 pb-4",
-                      head_row: "flex",
-                      head_cell: "w-9 text-xs font-medium text-slate-500",
-                      row: "mt-1 flex w-full",
-                      cell: "relative h-9 w-9",
-                      day: "h-9 w-9 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100 focus:outline-none",
+                      caption: "flex justify-center pb-3",
+                      caption_label:
+                        "text-sm font-medium tracking-[-0.01em] text-[#0F1729]",
+                      nav_button:
+                        "h-7 w-7 rounded-full hover:bg-slate-100",
+                      head_row: "grid grid-cols-7",
+                      head_cell:
+                        "flex items-center justify-center text-xs font-medium text-slate-500",
+                      row: "mt-1 grid w-full grid-cols-7",
+                      cell: "flex h-9 items-center justify-center",
+                      day:
+                        "h-9 w-9 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100 focus:outline-none",
                       day_selected:
-                        "h-9 w-9 rounded-full bg-slate-900 text-white hover:bg-slate-900 hover:text-white focus:outline-none",
-                      day_today: "border border-slate-300 text-slate-900",
+                        "h-9 w-9 rounded-full bg-[#0F1729] text-white hover:bg-[#0F1729] hover:text-white focus:outline-none",
+                      day_today:
+                        "border border-slate-300 text-[#0F1729]",
                       day_outside: "text-slate-300",
                     }}
                   />
@@ -281,15 +352,17 @@ const Index = () => {
                 {/* Right column: entries for selected date */}
                 <div className="lg:col-span-1">
                   <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold text-slate-900">{friendlyDate}</h2>
+                    <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[#0F1729]">
+                      {selectedFriendly}
+                    </h2>
                   </div>
                   <div className="mt-6 space-y-4">
-                    {filteredEntries.length > 0 ? (
-                      filteredEntries.map((entry, index) => (
+                    {selectedDayEntries.length > 0 ? (
+                      selectedDayEntries.map((entry, index) => (
                         <TimelineEntry
                           key={entry.id}
                           entry={entry}
-                          isLast={index === filteredEntries.length - 1}
+                          isLast={index === selectedDayEntries.length - 1}
                           onStatusChange={handleStatusChange}
                           onEdit={() => setEditingEntry(entry)}
                           onRemove={handleRemoveEntry}
@@ -297,7 +370,9 @@ const Index = () => {
                       ))
                     ) : (
                       <div className="rounded-xl border border-white/60 bg-white/80 p-6 text-center shadow-[0_14px_36px_rgba(15,23,42,0.08)]">
-                        <p className="font-semibold text-slate-800">No entries for this day.</p>
+                        <p className="font-semibold text-slate-800">
+                          No entries for this day.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -308,8 +383,21 @@ const Index = () => {
         </main>
 
         <ChatbotWidget />
+
+        {editingEntry && (
+          <EditEntryDialog
+            entry={editingEntry}
+            isOpen={!!editingEntry}
+            onClose={() => setEditingEntry(null)}
+            onUpdate={handleUpdateEntry}
+            onRemove={(id) => {
+              handleRemoveEntry(id);
+              setEditingEntry(null);
+            }}
+          />
+        )}
       </div>
-    </TooltipProvider >
+    </TooltipProvider>
   );
 };
 

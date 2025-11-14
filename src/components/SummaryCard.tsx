@@ -244,17 +244,6 @@ export function SummaryCard({ entries }: SummaryCardProps) {
                   {entry.status}
                 </Badge>
               )}
-              <Badge
-                className={
-                  entry.status === "completed"
-                    ? "bg-success text-success-foreground"
-                    : entry.status === "missed"
-                      ? "bg-destructive text-destructive-foreground"
-                      : "bg-muted text-muted-foreground"
-                }
-              >
-                {entry.status}
-              </Badge>
             </div>
           ))}
         </div>
