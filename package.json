@@ -71,6 +71,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
+    "@types/jspdf": "^2.0.0",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",

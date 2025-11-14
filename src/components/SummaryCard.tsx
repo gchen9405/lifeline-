@@ -49,7 +49,7 @@ export function SummaryCard({ entries }: SummaryCardProps) {
 
       doc.setFontSize(11);
       doc.setFont("helvetica", "normal");
-      
+
       // Medications
       doc.setFont("helvetica", "bold");
       doc.text("Medications:", margin, yPos);
@@ -133,13 +133,13 @@ export function SummaryCard({ entries }: SummaryCardProps) {
             doc.text(`   Status: ${entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}`, margin + 5, yPos);
             yPos += 5;
           }
-          
+
           if (entry.description) {
             const descriptionLines = doc.splitTextToSize(`   Description: ${entry.description}`, pageWidth - margin * 2 - 5);
             doc.text(descriptionLines, margin + 5, yPos);
             yPos += descriptionLines.length * 5;
           }
-          
+
           if (entry.provider) {
             doc.text(`   Provider: ${entry.provider}`, margin + 5, yPos);
             yPos += 5;
@@ -237,8 +237,8 @@ export function SummaryCard({ entries }: SummaryCardProps) {
                     entry.status === "completed"
                       ? "bg-success text-success-foreground"
                       : entry.status === "missed"
-                      ? "bg-destructive text-destructive-foreground"
-                      : "bg-muted text-muted-foreground"
+                        ? "bg-destructive text-destructive-foreground"
+                        : "bg-muted text-muted-foreground"
                   }
                 >
                   {entry.status}

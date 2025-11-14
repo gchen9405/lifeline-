@@ -110,20 +110,6 @@ export const TimelineEntry = ({ entry, onStatusChange, onEdit, onRemove, isLast 
             </div>
           </div>
 
-              <div className="flex flex-col items-end gap-2">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{entry.time}</span>
-                </div>
-                {entry.type !== "lab" && 
-                  ((entry.type === "medication" || entry.type === "appointment") && 
-                   entry.status === "completed") && (
-                  <Badge variant={status.variant} className="gap-1.5">
-                    <StatusIcon className="h-3 w-3" />
-                    {status.label}
-                  </Badge>
-                )}
-              </div>
           {/* title + description */}
           <div className="mt-2 space-y-1">
             <h3 className="text-lg font-semibold text-slate-900">{entry.title}</h3>
