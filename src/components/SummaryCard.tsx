@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Download } from "lucide-react";
 import { TimelineEntryData } from "./TimelineEntry";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
 
 interface SummaryCardProps {
   entries: TimelineEntryData[];
@@ -18,7 +19,149 @@ export function SummaryCard({ entries }: SummaryCardProps) {
   const missedMeds = medications.filter(m => m.status === "missed").length;
 
   const handleExport = () => {
-    toast.success("Summary exported successfully");
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      let yPos = margin;
+
+      // Title
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text("Treatment Summary", margin, yPos);
+      yPos += 10;
+
+      // Subtitle
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("Overview of your health timeline", margin, yPos);
+      yPos += 15;
+
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+
+      // Statistics Section
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Overview Statistics", margin, yPos);
+      yPos += 10;
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      
+      // Medications
+      doc.setFont("helvetica", "bold");
+      doc.text("Medications:", margin, yPos);
+      doc.setFont("helvetica", "normal");
+      let medText = `${medications.length} total`;
+      if (completedMeds > 0) {
+        medText += ` - ${completedMeds} taken`;
+      }
+      if (missedMeds > 0) {
+        medText += ` - ${missedMeds} missed`;
+      }
+      doc.text(medText, margin + 50, yPos);
+      yPos += 8;
+
+      // Lab Results
+      doc.setFont("helvetica", "bold");
+      doc.text("Lab Results:", margin, yPos);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${labResults.length} total`, margin + 50, yPos);
+      yPos += 8;
+
+      // Appointments
+      doc.setFont("helvetica", "bold");
+      doc.text("Appointments:", margin, yPos);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${appointments.length} total`, margin + 50, yPos);
+      yPos += 12;
+
+      // Missed Medications Warning
+      if (missedMeds > 0) {
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(220, 38, 38);
+        doc.text(
+          `Warning: You have ${missedMeds} missed medication${missedMeds > 1 ? "s" : ""}`,
+          margin,
+          yPos
+        );
+        doc.setTextColor(0, 0, 0);
+        yPos += 12;
+      }
+
+      // Recent Activity Section
+      const recentEntries = entries.slice(0, 5);
+      if (recentEntries.length > 0) {
+        // Check if we need a new page
+        if (yPos > doc.internal.pageSize.getHeight() - 40) {
+          doc.addPage();
+          yPos = margin;
+        }
+
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("Recent Activity", margin, yPos);
+        yPos += 10;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+
+        recentEntries.forEach((entry, index) => {
+          // Check if we need a new page
+          if (yPos > doc.internal.pageSize.getHeight() - 30) {
+            doc.addPage();
+            yPos = margin;
+          }
+
+          // Entry title
+          doc.setFont("helvetica", "bold");
+          doc.text(`${index + 1}. ${entry.title}`, margin, yPos);
+          yPos += 6;
+
+          // Entry details
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 100, 100);
+          doc.text(`   Type: ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}`, margin + 5, yPos);
+          yPos += 5;
+          doc.text(`   Time: ${entry.time}`, margin + 5, yPos);
+          yPos += 5;
+          // Only show status for non-lab entries
+          if (entry.type !== "lab") {
+            doc.text(`   Status: ${entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}`, margin + 5, yPos);
+            yPos += 5;
+          }
+          
+          if (entry.description) {
+            const descriptionLines = doc.splitTextToSize(`   Description: ${entry.description}`, pageWidth - margin * 2 - 5);
+            doc.text(descriptionLines, margin + 5, yPos);
+            yPos += descriptionLines.length * 5;
+          }
+          
+          if (entry.provider) {
+            doc.text(`   Provider: ${entry.provider}`, margin + 5, yPos);
+            yPos += 5;
+          }
+
+          doc.setTextColor(0, 0, 0);
+          yPos += 5; // Space between entries
+        });
+      }
+
+      // Generate filename with current date
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const filename = `treatment-summary-${dateStr}.pdf`;
+
+      // Save the PDF
+      doc.save(filename);
+      toast.success("Summary exported successfully");
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Failed to export summary. Please try again.");
+    }
   };
 
   return (
@@ -88,6 +231,19 @@ export function SummaryCard({ entries }: SummaryCardProps) {
                 <p className="font-medium text-sm text-foreground">{entry.title}</p>
                 <p className="text-xs text-muted-foreground">{entry.time}</p>
               </div>
+              {entry.type !== "lab" && (
+                <Badge
+                  className={
+                    entry.status === "completed"
+                      ? "bg-success text-success-foreground"
+                      : entry.status === "missed"
+                      ? "bg-destructive text-destructive-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }
+                >
+                  {entry.status}
+                </Badge>
+              )}
               <Badge
                 className={
                   entry.status === "completed"
