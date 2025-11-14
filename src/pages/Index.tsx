@@ -156,8 +156,8 @@ const Index = () => {
 
   const tabConfig = [
     { value: "timeline", label: "Today", Icon: CalendarDays },
-    { value: "calendar", label: "Calendar", Icon: CalendarIcon },
     { value: "summary", label: "Summary", Icon: TrendingUp },
+    { value: "calendar", label: "Calendar", Icon: CalendarIcon },
   ] as const;
 
   return (
@@ -165,39 +165,44 @@ const Index = () => {
       <Sonner />
       <ReminderSystem />
       <div className="min-h-screen px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+        {/* App name in top-left */}
+        <header className="mx-auto mb-6 flex max-w-6xl items-center">
+          <span className="text-lg font-semibold tracking-tight text-slate-700">
+            Lifeline-
+          </span>
+        </header>
+
         <main className="mx-auto flex max-w-6xl flex-col gap-8">
           <Tabs defaultValue="timeline" className="space-y-8">
-            {/* HERO (plain; no glass wrapper) */}
-            <div className="flex flex-col gap-2">
-              <div className="space-y-0">
-                <span className="text-lg font-semibold tracking-tight text-slate-700">Lifeline-</span>
-                <h1 className="font-semibold text-[44px] leading-[1.05] text-[#0F1729] sm:text-[64px]">
-                  Welcome Back
-                </h1>
-                <p className="text-lg text-slate-600">
-                  See what’s happening across your health: daily updates to your complete health picture.
-                </p>
-              </div>
+            {/* HERO (now only Welcome Back + subtitle) */}
+            <div className="space-y-1">
+              <h1 className="font-semibold text-[44px] leading-[1.05] text-[#0F1729] sm:text-[64px]">
+                Welcome Back
+              </h1>
+              <p className="text-lg text-slate-600">
+                See what’s happening across your health: daily updates to your complete health picture.
+              </p>
             </div>
 
-            <div className="flex items-center justify-between">
-              {/* Segmented tabs (compact) */}
-              <TabsList className="mt-1 inline-flex rounded-lg bg-white/70 p-1 ring-1 ring-black/5 shadow-sm backdrop-blur">
+            <div className="flex items-center justify-between gap-4">
+              {/* equal-width segmented control */}
+              <TabsList className="mt-1 inline-flex w-full max-w-md rounded-full bg-white/70 p-1 ring-1 ring-black/5 shadow-sm backdrop-blur">
                 {tabConfig.map(({ value, label, Icon }) => (
                   <TabsTrigger
                     key={value}
                     value={value}
-                    className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition
-                               data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-slate-600 transition
+                   data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow"
                   >
                     <Icon className="h-4 w-4" />
                     {label}
                   </TabsTrigger>
                 ))}
               </TabsList>
+
               <AddEntryDialog
                 onAddEntry={handleAddEntry}
-                buttonClassName="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-900/90"
+                buttonClassName="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-900/90"
               />
             </div>
 
@@ -243,21 +248,38 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="summary">
-              <section className="rounded-xl border border-white/60 bg-white/80 p-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur">                <SummaryCard entries={entries} />
+              <section className="rounded-3xl border border-white/50 bg-white/40 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur">
+                <SummaryCard entries={entries} />
               </section>
             </TabsContent>
 
             <TabsContent value="calendar">
-              <section className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                <div className="lg:col-span-1">
+              <section className="grid gap-8 rounded-3xl border border-white/50 bg-white/40 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur lg:grid-cols-[1.1fr,2fr]">
+                {/* Calendar column */}
+                <div className="flex items-start justify-center">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => date && setSelectedDate(date)}
-                    className="rounded-xl border bg-card"
+                    className="w-full max-w-xs rounded-2xl border border-white/60 bg-white/80 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.09)] backdrop-blur-sm"
+                    classNames={{
+                      months: "space-y-4",
+                      caption: "flex justify-center pt-1 pb-4",
+                      head_row: "flex",
+                      head_cell: "w-9 text-xs font-medium text-slate-500",
+                      row: "mt-1 flex w-full",
+                      cell: "relative h-9 w-9",
+                      day: "h-9 w-9 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100 focus:outline-none",
+                      day_selected:
+                        "h-9 w-9 rounded-full bg-slate-900 text-white hover:bg-slate-900 hover:text-white focus:outline-none",
+                      day_today: "border border-slate-300 text-slate-900",
+                      day_outside: "text-slate-300",
+                    }}
                   />
                 </div>
-                <div className="lg:col-span-2">
+
+                {/* Right column: entries for selected date */}
+                <div className="lg:col-span-1">
                   <div className="space-y-1">
                     <h2 className="text-2xl font-semibold text-slate-900">{friendlyDate}</h2>
                   </div>
@@ -274,8 +296,8 @@ const Index = () => {
                         />
                       ))
                     ) : (
-                      <div className="rounded-xl border bg-card p-6 text-center">
-                        <p className="font-semibold text-foreground">No entries for this day.</p>
+                      <div className="rounded-xl border border-white/60 bg-white/80 p-6 text-center shadow-[0_14px_36px_rgba(15,23,42,0.08)]">
+                        <p className="font-semibold text-slate-800">No entries for this day.</p>
                       </div>
                     )}
                   </div>
@@ -287,7 +309,7 @@ const Index = () => {
 
         <ChatbotWidget />
       </div>
-    </TooltipProvider>
+    </TooltipProvider >
   );
 };
 
