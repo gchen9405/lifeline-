@@ -96,8 +96,8 @@ export function ChatbotWidget() {
                     className={cn(
                       "max-w-[80%] rounded-lg p-3 text-sm",
                       m.sender === "bot"
-                        ? "bg-muted"
-                        : "bg-primary text-primary-foreground"
+                        ? "bg-muted text-foreground"
+                        : "btn-primary-send text-primary-foreground"
                     )}
                   >
                     {m.text}

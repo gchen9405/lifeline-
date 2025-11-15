@@ -232,7 +232,7 @@ const Index = () => {
       <div className="min-h-screen px-4 pb-16 pt-6 sm:px-6 lg:px-8">
         {/* App name pinned to top-left */}
         <header className="mb-6 flex items-center">
-          <span className="font-['IBM_Plex_Sans_Condensed'] font-semibold text-[34px] tracking-tight text-[#0F1729]">
+          <span className="font-['IBM_Plex_Sans_Condensed'] font-semibold text-[38px] tracking-[-0.06em] text-[#0F1729]">
             Lifeline-
           </span>
         </header>
@@ -241,10 +241,10 @@ const Index = () => {
           <Tabs defaultValue="timeline" className="space-y-8">
             {/* HERO */}
             <div className="space-y-1">
-              <h1 className="font-['IBM_Plex_Sans_Condensed'] font-bold text-[48px] leading-none tracking-tighter text-[#0F1729] sm:text-[72px]">
+              <h1 className="font-['IBM_Plex_Sans_Condensed'] font-semibold text-[48px] leading-none tracking-tighter text-[#0F1729] sm:text-[72px]">
                 Welcome Back
               </h1>
-              <p className="text-[16px] font-medium tracking-[-0.025em] text-[#0F1729]">
+              <p className="text-[24px] font-medium tracking-[-0.025em] text-[#0F1729]">
                 See what’s happening across your health: daily updates to your complete health picture.
               </p>
             </div>
