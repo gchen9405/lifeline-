@@ -232,7 +232,7 @@ const Index = () => {
       <div className="min-h-screen px-4 pb-16 pt-6 sm:px-6 lg:px-8">
         {/* App name pinned to top-left */}
         <header className="mb-6 flex items-center">
-          <span className="font-semibold text-[32px] tracking-[-0.03em] text-[#0F1729]">
+          <span className="font-['IBM_Plex_Sans_Condensed'] font-semibold text-[34px] tracking-tight text-[#0F1729]">
             Lifeline-
           </span>
         </header>
@@ -241,10 +241,10 @@ const Index = () => {
           <Tabs defaultValue="timeline" className="space-y-8">
             {/* HERO */}
             <div className="space-y-1">
-              <h1 className="font-semibold text-[44px] leading-[1.02] tracking-[-0.04em] text-[#0F1729] sm:text-[64px]">
+              <h1 className="font-['IBM_Plex_Sans_Condensed'] font-bold text-[48px] leading-none tracking-tighter text-[#0F1729] sm:text-[72px]">
                 Welcome Back
               </h1>
-              <p className="text-[16px] font-medium tracking-[-0.02em] text-[#0F1729]">
+              <p className="text-[16px] font-medium tracking-[-0.025em] text-[#0F1729]">
                 See what’s happening across your health: daily updates to your complete health picture.
               </p>
             </div>
@@ -328,11 +328,14 @@ const Index = () => {
                     className="w-full max-w-sm rounded-2xl border border-white/60 bg-white/80 px-4 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.09)] backdrop-blur-sm"
                     classNames={{
                       months: "space-y-4",
-                      caption: "flex justify-center pb-3",
+                      // 👇 add horizontal padding + space for nav buttons
+                      caption: "flex items-center justify-between px-5 pb-3",
+                      // keep label centered between the two nav buttons
                       caption_label:
-                        "text-sm font-medium tracking-[-0.01em] text-[#0F1729]",
+                        "flex-1 text-center text-sm font-medium tracking-[-0.01em] text-[#0F1729]",
+                      // slightly larger button and inner padding to pull it off the edge
                       nav_button:
-                        "h-7 w-7 rounded-full hover:bg-slate-100",
+                        "inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100",
                       head_row: "grid grid-cols-7",
                       head_cell:
                         "flex items-center justify-center text-xs font-medium text-slate-500",
@@ -342,8 +345,7 @@ const Index = () => {
                         "h-9 w-9 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100 focus:outline-none",
                       day_selected:
                         "h-9 w-9 rounded-full bg-[#0F1729] text-white hover:bg-[#0F1729] hover:text-white focus:outline-none",
-                      day_today:
-                        "border border-slate-300 text-[#0F1729]",
+                      day_today: "border border-slate-300 text-[#0F1729]",
                       day_outside: "text-slate-300",
                     }}
                   />
