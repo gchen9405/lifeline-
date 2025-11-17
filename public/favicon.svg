@@ -1,0 +1,27 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Blue → Purple gradient similar to your site background -->
+    <radialGradient id="grad" cx="30%" cy="30%" r="110%">
+      <stop offset="0%" stop-color="hsl(217, 92%, 62%)"/>
+      <stop offset="50%" stop-color="hsl(243, 85%, 70%)"/>
+      <stop offset="100%" stop-color="hsl(274, 90%, 64%)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background gradient -->
+  <rect width="256" height="256" rx="48" fill="url(#grad)"/>
+
+  <!-- Text "L-" in IBM Plex Sans -->
+  <text
+    x="50%" y="58%"
+    font-family="IBM Plex Sans, sans-serif"
+    font-weight="700"
+    font-size="140"
+    text-anchor="middle"
+    fill="white"
+    letter-spacing="-8"
+    dominant-baseline="middle"
+  >
+    L-
+  </text>
+</svg>
