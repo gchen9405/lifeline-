@@ -154,5 +154,87 @@ Behavior:
     }
 });
 
+app.post("/api/import", async (req, res) => {
+    try {
+        const { text, image } = req.body;
+
+        if (!text && !image) {
+            return res.status(400).json({ error: "No text or image provided" });
+        }
+
+        const SYSTEM_PROMPT = `
+    You are an AI assistant that extracts structured timeline entries from unstructured text or images (like prescriptions, lab results, appointment emails).
+    
+    Extract a list of entries in this JSON format:
+    [
+      {
+        "type": "medication" | "appointment" | "lab",
+        "title": "Short title",
+        "description": "Details, dosage, instructions",
+        "date": "YYYY-MM-DD",
+        "time": "HH:MM AM/PM",
+        "provider": "Doctor or Hospital Name (optional)",
+        "value": "98" (only for lab),
+        "unit": "mg/dL" (only for lab),
+        "referenceRange": "70-100" (only for lab)
+      }
+    ]
+    
+    Rules:
+    - If date is missing, assume today (${new Date().toISOString().split('T')[0]}).
+    - If time is missing, estimate a reasonable time (e.g. 9:00 AM for morning meds).
+    - Return ONLY the JSON array. No markdown, no code blocks.
+    `.trim();
+
+        const parts = [{ text: SYSTEM_PROMPT }];
+        if (text) parts.push({ text: `INPUT TEXT:\n${text}` });
+        if (image) {
+            // image is data:image/png;base64,...
+            // Gemini expects base64 string without prefix in inlineData
+            const base64Data = image.split(",")[1];
+            const mimeType = image.split(";")[0].split(":")[1];
+            parts.push({
+                inlineData: {
+                    mimeType: mimeType,
+                    data: base64Data
+                }
+            });
+        }
+
+        const MODEL = "gemini-1.5-flash"; // Multimodal model
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
+
+        const resp = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: [{ parts }],
+                generationConfig: {
+                    temperature: 0.1,
+                    responseMimeType: "application/json"
+                },
+            }),
+        });
+
+        if (!resp.ok) {
+            const txt = await resp.text();
+            console.error("Gemini import error", resp.status, txt);
+            throw new Error("Gemini API error");
+        }
+
+        const data = await resp.json();
+        const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!jsonText) throw new Error("No data generated");
+
+        const entries = JSON.parse(jsonText);
+        return res.json({ entries });
+
+    } catch (e) {
+        console.error("Server error in /api/import", e);
+        return res.status(500).json({ error: "Failed to process import" });
+    }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`API on http://localhost:${PORT}`));

@@ -12,6 +12,11 @@ import {
   Calendar as CalendarIcon,
   TrendingUp,
   CalendarDays,
+  Plus,
+  MessageCircle,
+  LayoutList,
+  FileText,
+  Upload,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -23,12 +28,14 @@ import {
   addDays,
 } from "date-fns";
 import { EditEntryDialog } from "@/components/EditEntryDialog";
-import { ChatbotWidget } from "@/components/ChatbotWidget";
-import { Toaster as Sonner } from "sonner";
+import { ChatbotWidget, ChatInterface } from "@/components/ChatbotWidget";
+import { Toaster as Sonner, toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEntriesStore } from "@/store/entries";
+import { ImportDialog } from "@/components/ImportDialog";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("timeline");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingEntry, setEditingEntry] =
     useState<TimelineEntryData | null>(null);
@@ -148,6 +155,16 @@ const Index = () => {
     [updateEntry]
   );
 
+  const handleImport = (newEntries: Omit<TimelineEntryData, "id">[]) => {
+    newEntries.forEach((entry) => {
+      addEntry({
+        ...entry,
+        status: "upcoming",
+      });
+    });
+    toast.success(`Imported ${newEntries.length} entries`);
+  };
+
   // ---------- 2) "Real" today vs selected calendar date ----------
 
   // real system "today"
@@ -191,39 +208,67 @@ const Index = () => {
     return hours * 60 + minutes;
   };
 
+  // Helper to filter entries for a specific date (handling recurrence)
+  const getEntriesForDate = useCallback((targetDate: Date, allEntries: TimelineEntryData[]) => {
+    const targetDateStr = format(targetDate, "yyyy-MM-dd");
+
+    return allEntries
+      .filter((e) => {
+        const entryDate = parseISO(e.date);
+
+        // 1. Exact date match
+        if (e.date === targetDateStr) return true;
+
+        // 2. Recurring logic
+        // Only check recurring if the target date is after or same as start date
+        if (isAfter(targetDate, entryDate) || isEqual(targetDate, entryDate)) {
+          if (!e.recurring) return false;
+
+          // Handle legacy strings
+          if (e.recurring === "daily") return true;
+          if (e.recurring === "weekly" && getDay(targetDate) === getDay(entryDate)) return true;
+
+          // Handle structured recurrence (JSON)
+          if (e.recurring.startsWith("{")) {
+            try {
+              const recurrence = JSON.parse(e.recurring);
+
+              if (recurrence.type === "interval") {
+                const daysDiff = Math.floor((targetDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24));
+                return daysDiff % recurrence.value === 0;
+              }
+
+              if (recurrence.type === "specific_days") {
+                return recurrence.days.includes(getDay(targetDate));
+              }
+            } catch (err) {
+              console.error("Failed to parse recurrence", err);
+            }
+          }
+        }
+        return false;
+      })
+      .sort((a, b) => parseTime(a.time) - parseTime(b.time));
+  }, []);
+
   // Entries strictly for *today* tab (always real today)
   const todayEntries = useMemo(
-    () =>
-      entries
-        .filter((e) => e.date === todayStr)
-        .sort((a, b) => parseTime(a.time) - parseTime(b.time)),
-    [entries, todayStr]
+    () => getEntriesForDate(today, entries),
+    [today, entries, getEntriesForDate]
   );
 
   // Entries for the *selected date* on the calendar tab
   const selectedDayEntries = useMemo(
-    () =>
-      entries
-        .filter((e) => {
-          const entryDate = parseISO(e.date);
-          if (e.date === selectedDateStr) return true;
-
-          if (isAfter(selectedDate, entryDate) || isEqual(selectedDate, entryDate)) {
-            if (e.recurring === "daily") return true;
-            if (e.recurring === "weekly" && getDay(selectedDate) === getDay(entryDate))
-              return true;
-          }
-          return false;
-        })
-        .sort((a, b) => parseTime(a.time) - parseTime(b.time)),
-    [entries, selectedDate, selectedDateStr]
+    () => getEntriesForDate(selectedDate, entries),
+    [selectedDate, entries, getEntriesForDate]
   );
 
   const tabConfig = [
-    { value: "timeline", label: "Today", Icon: CalendarDays },
-    { value: "summary", label: "Summary", Icon: TrendingUp },
+    { value: "timeline", label: "Today", Icon: LayoutList },
+    { value: "summary", label: "Summary", Icon: FileText },
     { value: "calendar", label: "Calendar", Icon: CalendarIcon },
-  ] as const;
+    { value: "chat", label: "Chat", Icon: MessageCircle }, // Mobile only tab effectively
+  ];
 
   return (
     <TooltipProvider>
@@ -237,8 +282,8 @@ const Index = () => {
           </span>
         </header>
 
-        <main className="mx-auto flex max-w-6xl flex-col gap-8">
-          <Tabs defaultValue="timeline" className="space-y-8">
+        <main className="mx-auto flex max-w-6xl flex-col gap-8 pb-24 md:pb-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             {/* HERO */}
             <div className="space-y-1">
               <h1 className="font-['IBM_Plex_Sans_Condensed'] font-semibold text-[48px] leading-none tracking-tighter text-[#0F1729] sm:text-[72px]">
@@ -250,9 +295,9 @@ const Index = () => {
             </div>
 
             <div className="flex items-center justify-between gap-4">
-              {/* equal-width segmented control */}
-              <TabsList className="mt-1 inline-flex w-full max-w-md rounded-full bg-white/70 p-1 ring-1 ring-black/5 shadow-sm backdrop-blur">
-                {tabConfig.map(({ value, label, Icon }) => (
+              {/* equal-width segmented control - DESKTOP ONLY */}
+              <TabsList className="hidden md:inline-flex mt-1 w-full max-w-md rounded-full bg-white/70 p-1 ring-1 ring-black/5 shadow-sm backdrop-blur">
+                {tabConfig.filter(t => t.value !== 'chat').map(({ value, label, Icon }) => (
                   <TabsTrigger
                     key={value}
                     value={value}
@@ -265,10 +310,12 @@ const Index = () => {
                 ))}
               </TabsList>
 
-              <AddEntryDialog
-                onAddEntry={handleAddEntry}
-                buttonClassName="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-white shadow-lg transition hover:bg-slate-900/90"
-              />
+              <div className="hidden md:flex gap-2">
+                <AddEntryDialog
+                  onAddEntry={handleAddEntry}
+                  buttonClassName="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-white shadow-lg transition hover:bg-slate-900/90"
+                />
+              </div>
             </div>
 
             {/* -------- TODAY TAB (real today only) -------- */}
@@ -309,10 +356,12 @@ const Index = () => {
               </section>
             </TabsContent>
 
+
+
             {/* -------- SUMMARY TAB -------- */}
-            <TabsContent value="summary">
+            <TabsContent value="summary" className="mt-6">
               <section className="rounded-3xl border border-white/50 bg-white/40 p-8 shadow-[0_30px_70px_rgba(88,80,236,0.22)] backdrop-blur">
-                <SummaryCard entries={entries} />
+                <SummaryCard entries={entries} onImport={handleImport} />
               </section>
             </TabsContent>
 
@@ -381,6 +430,12 @@ const Index = () => {
                 </div>
               </section>
             </TabsContent>
+
+
+
+            <TabsContent value="chat" className="mt-0 h-[calc(100dvh-80px)] md:h-[calc(100vh-200px)] flex flex-col">
+              <ChatInterface className="flex-1" />
+            </TabsContent>
           </Tabs>
         </main>
 
@@ -398,6 +453,34 @@ const Index = () => {
             }}
           />
         )}
+        {/* MOBILE BOTTOM NAV */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/80 px-6 pb-6 pt-4 backdrop-blur-lg md:hidden">
+          <div className="flex items-center justify-around">
+            {tabConfig.map(({ value, label, Icon }) => (
+              <button
+                key={value}
+                onClick={() => setActiveTab(value)}
+                className={`flex flex-col items-center gap-1 ${activeTab === value ? "text-slate-900" : "text-slate-400"
+                  }`}
+              >
+                <Icon className={`h-6 w-6 ${activeTab === value ? "fill-current" : ""}`} />
+                <span className="text-[10px] font-medium">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* MOBILE FAB */}
+        <div className="fixed bottom-24 right-6 z-50 md:hidden flex flex-col gap-3">
+          {activeTab !== 'chat' && (
+            <AddEntryDialog
+              onAddEntry={handleAddEntry}
+              buttonClassName="h-14 w-14 rounded-full bg-slate-900 p-0 shadow-xl hover:bg-slate-800 flex items-center justify-center"
+              triggerContent={<Plus className="h-6 w-6 text-white" />}
+            />
+          )}
+        </div>
+
       </div>
     </TooltipProvider>
   );

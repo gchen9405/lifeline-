@@ -7,7 +7,7 @@ Frontend: React application built with Typescript, TailwindCSS
 Backend: we will not be making a true backend
 AI Integration: Google Gemini 2.5 Flash Lite
 
-Key Features: 
+Acknowledgements: we utilized AI tools including ChatGPT and Gemini to generate starter code and debug
 
 ### Requirements
 - A `.env` file in the project root with your Gemini key:

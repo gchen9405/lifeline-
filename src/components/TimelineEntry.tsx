@@ -1,19 +1,31 @@
 import {
   Pill, Calendar, FlaskConical, CheckCircle2, XCircle, Clock, LucideIcon, Trash2, Edit,
+  AlertCircle, Stethoscope, StickyNote, MapPin, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type EntryStatus = "completed" | "upcoming" | "missed" | "taken" | "returned";
+export type EntryType = "medication" | "lab" | "appointment" | "generic";
+export type EntryStatus = "completed" | "missed" | "upcoming" | "taken" | "awaiting_result" | "returned";
+
 export interface TimelineEntryData {
   id: string;
-  type: "medication" | "appointment" | "lab";
+  type: EntryType;
   title: string;
-  description: string;
+  description?: string;
   time: string;
   status: EntryStatus;
   provider?: string;
   date: string;
-  recurring?: 'daily' | 'weekly';
+  recurring?: string; // "daily", "weekly", or JSON string for structured recurrence
+
+  // Lab specific
+  value?: string;
+  unit?: string;
+  referenceRange?: string;
+
+  // New fields
+  location?: string;
+  followUp?: string; // ISO date string for follow-up reminder
 }
 
 interface TimelineEntryProps {
@@ -28,22 +40,41 @@ const statusConfig: Record<EntryStatus, { label: string; chip: string }> = {
   completed: { label: "Completed", chip: "bg-emerald-100 text-emerald-700" },
   taken: { label: "Taken", chip: "bg-emerald-100 text-emerald-700" },
   upcoming: { label: "Upcoming", chip: "bg-slate-100 text-slate-600" },
-  missed: { label: "Missed", chip: "bg-rose-100 text-rose-600" },
-  returned: { label: "Returned", chip: "bg-sky-100 text-sky-700" },
+  missed: { label: "Missed", chip: "bg-rose-100 text-rose-700" },
+  returned: { label: "Returned", chip: "bg-blue-100 text-blue-700" },
+  awaiting_result: { label: "Awaiting", chip: "bg-amber-100 text-amber-700" },
 };
 
-const statusIcons: Record<EntryStatus, LucideIcon> = {
+const STATUS_ICONS: Record<EntryStatus, LucideIcon> = {
   completed: CheckCircle2,
   taken: CheckCircle2,
   upcoming: Clock,
   missed: XCircle,
-  returned: CheckCircle2,
+  returned: AlertCircle,
+  awaiting_result: Clock,
 };
 
-const typeConfig: Record<TimelineEntryData["type"], { icon: LucideIcon; accent: string; indicator: string }> = {
-  medication: { icon: Pill, accent: "text-sky-600", indicator: "from-sky-100 to-blue-50 border-sky-100" },
-  appointment: { icon: Calendar, accent: "text-purple-600", indicator: "from-purple-100 to-indigo-50 border-purple-100" },
-  lab: { icon: FlaskConical, accent: "text-cyan-600", indicator: "from-cyan-100 to-sky-50 border-cyan-100" },
+const TYPE_CONFIG: Record<EntryType, { icon: LucideIcon; accent: string; indicator: string }> = {
+  medication: {
+    icon: Pill,
+    accent: "text-white",
+    indicator: "bg-blue-500 border-blue-600",
+  },
+  appointment: {
+    icon: Stethoscope,
+    accent: "text-white",
+    indicator: "bg-purple-500 border-purple-600",
+  },
+  lab: {
+    icon: FlaskConical,
+    accent: "text-white",
+    indicator: "bg-amber-500 border-amber-600",
+  },
+  generic: {
+    icon: StickyNote,
+    accent: "text-white",
+    indicator: "bg-slate-500 border-slate-600",
+  },
 };
 
 interface StatusActionConfig { label: string; next: EntryStatus; }
@@ -56,25 +87,25 @@ const getStatusToggle = (type: TimelineEntryData["type"], status: EntryStatus): 
 
 export const TimelineEntry = ({ entry, onStatusChange, onEdit, onRemove, isLast }: TimelineEntryProps) => {
   const isToggleable = entry.type === "medication" || entry.type === "appointment";
-  const config = typeConfig[entry.type];
-  const StatusIcon = statusIcons[entry.status];
+  const config = TYPE_CONFIG[entry.type];
+  const StatusIcon = STATUS_ICONS[entry.status];
   const statusMeta = statusConfig[entry.status];
   const statusToggle = getStatusToggle(entry.type, entry.status);
 
   return (
-    <div className="relative flex gap-6 pb-8 last:pb-0">
+    <div className="relative flex gap-6 pb-6 last:pb-0">
       {/* connector line (lighter & precisely aligned to icon center) */}
       {!isLast && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-[28px] top-[70px] h-[calc(100%-40px)] w-px bg-slate-300/70"
+          className="pointer-events-none absolute left-[27.5px] top-[70px] h-[calc(100%-40px)] w-0.5 bg-slate-400"
         />
       )}
 
       {/* left rail icon */}
       <div className="relative flex flex-col items-center">
         <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-white/60">
-          <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl border bg-gradient-to-br", config.indicator)}>
+          <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl border shadow-sm", config.indicator)}>
             <config.icon className={cn("h-5 w-5", config.accent)} />
           </div>
         </div>
@@ -123,9 +154,72 @@ export const TimelineEntry = ({ entry, onStatusChange, onEdit, onRemove, isLast 
               {entry.time}
             </div>
             {entry.provider && (
-              <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4 text-slate-400" />
+              <div className="mt-1 text-xs font-medium text-slate-500">
                 {entry.provider}
+              </div>
+            )}
+
+            {entry.location && (
+              <div className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                <MapPin className="h-3 w-3" />
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(entry.location)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline hover:text-slate-700 flex items-center gap-0.5"
+                >
+                  {entry.location}
+                  <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              </div>
+            )}
+
+            {/* Lab Result Display */}
+            {entry.type === "lab" && entry.referenceRange && entry.value && (
+              <div className="w-full mt-2 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Result: {entry.value} {entry.unit}</span>
+                  <span>Range: {entry.referenceRange} {entry.unit}</span>
+                </div>
+                {/* Simple visual bar */}
+                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden relative">
+                  {(() => {
+                    try {
+                      const val = parseFloat(entry.value);
+                      const [min, max] = entry.referenceRange.split("-").map(parseFloat);
+                      if (isNaN(val) || isNaN(min) || isNaN(max)) return null;
+
+                      // Calculate position (clamped 0-100%)
+                      const range = max - min;
+                      const padding = range * 0.2; // Add 20% padding to visual range
+                      const visualMin = min - padding;
+                      const visualMax = max + padding;
+                      const visualRange = visualMax - visualMin;
+
+                      const percent = Math.max(0, Math.min(100, ((val - visualMin) / visualRange) * 100));
+                      const minPercent = ((min - visualMin) / visualRange) * 100;
+                      const maxPercent = ((max - visualMin) / visualRange) * 100;
+
+                      const isOutOfRange = val < min || val > max;
+                      const color = isOutOfRange ? "bg-rose-500" : "bg-emerald-500";
+
+                      return (
+                        <>
+                          {/* Normal Range Zone */}
+                          <div
+                            className="absolute top-0 bottom-0 bg-slate-300/50"
+                            style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
+                          />
+                          {/* Value Marker */}
+                          <div
+                            className={`absolute top-0 bottom-0 w-2 rounded-full ${color} ring-2 ring-white`}
+                            style={{ left: `calc(${percent}% - 4px)` }}
+                          />
+                        </>
+                      );
+                    } catch (e) { return null; }
+                  })()}
+                </div>
               </div>
             )}
           </div>

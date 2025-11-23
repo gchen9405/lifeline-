@@ -5,18 +5,21 @@ import { FileText, Download } from "lucide-react";
 import { TimelineEntryData } from "./TimelineEntry";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { ImportDialog } from "./ImportDialog";
 
 interface SummaryCardProps {
   entries: TimelineEntryData[];
+  onImport: (entries: Omit<TimelineEntryData, "id">[]) => void;
 }
 
-export function SummaryCard({ entries }: SummaryCardProps) {
+export function SummaryCard({ entries, onImport }: SummaryCardProps) {
   const medications = entries.filter(e => e.type === "medication");
   const labResults = entries.filter(e => e.type === "lab");
   const appointments = entries.filter(e => e.type === "appointment");
 
   const completedMeds = medications.filter(m => m.status === "taken").length;
-  const missedMeds = medications.filter(m => m.status === "missed").length;
+  const missedMedEntries = medications.filter(m => m.status === "missed");
+  const missedMeds = missedMedEntries.length;
 
   const handleExport = () => {
     try {
@@ -88,6 +91,15 @@ export function SummaryCard({ entries }: SummaryCardProps) {
           margin,
           yPos
         );
+        yPos += 6;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        missedMedEntries.forEach((entry) => {
+          doc.text(`• ${entry.title} (${entry.date} at ${entry.time})`, margin + 5, yPos);
+          yPos += 5;
+        });
+
         doc.setTextColor(0, 0, 0);
         yPos += 12;
       }
@@ -125,6 +137,8 @@ export function SummaryCard({ entries }: SummaryCardProps) {
           doc.setFont("helvetica", "normal");
           doc.setTextColor(100, 100, 100);
           doc.text(`   Type: ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}`, margin + 5, yPos);
+          yPos += 5;
+          doc.text(`   Date: ${entry.date}`, margin + 5, yPos);
           yPos += 5;
           doc.text(`   Time: ${entry.time}`, margin + 5, yPos);
           yPos += 5;
@@ -177,6 +191,16 @@ export function SummaryCard({ entries }: SummaryCardProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <ImportDialog
+            onImport={onImport}
+            buttonClassName="gap-2"
+            triggerContent={
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                Import
+              </>
+            }
+          />
           <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
             <Download className="h-4 w-4" />
             Export
@@ -213,9 +237,16 @@ export function SummaryCard({ entries }: SummaryCardProps) {
 
       {missedMeds > 0 && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4">
-          <p className="text-sm font-medium text-destructive">
+          <p className="text-sm font-medium text-destructive mb-2">
             ⚠️ You have {missedMeds} missed medication{missedMeds > 1 ? "s" : ""}
           </p>
+          <ul className="list-disc list-inside text-sm text-destructive/90 space-y-1 ml-2">
+            {missedMedEntries.map((entry) => (
+              <li key={entry.id}>
+                {entry.title} <span className="text-destructive/70 text-xs">({entry.date} at {entry.time})</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -229,7 +260,9 @@ export function SummaryCard({ entries }: SummaryCardProps) {
             >
               <div>
                 <p className="font-medium text-sm text-foreground">{entry.title}</p>
-                <p className="text-xs text-muted-foreground">{entry.time}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(entry.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {entry.time}
+                </p>
               </div>
               {entry.type !== "lab" && (
                 <Badge
