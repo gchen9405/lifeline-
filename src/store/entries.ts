@@ -8,7 +8,7 @@ type EntriesState = {
     bulkAdd: (arr: Omit<TimelineEntryData, "id">[]) => void;
     updateEntry: (id: string, newEntry: TimelineEntryData) => void;
     removeEntry: (id: string) => void;
-    setStatus: (id: string, status: EntryStatus) => void;
+    setStatus: (id: string, status: EntryStatus, date?: string) => void;
     clearAll: () => void;
 };
 
@@ -32,11 +32,20 @@ export const useEntriesStore = create<EntriesState>()(
                     ),
                 });
             },
-            setStatus: (id, status) => {
+            setStatus: (id, status, date) => {
                 set({
-                    entries: get().entries.map((en) =>
-                        en.id === id ? { ...en, status } : en
-                    ),
+                    entries: get().entries.map((en) => {
+                        if (en.id !== id) return en;
+                        
+                        // For recurring entries with a specific date, store status per date
+                        if (en.recurring && date) {
+                            const statusByDate = { ...(en.statusByDate || {}), [date]: status };
+                            return { ...en, statusByDate };
+                        }
+                        
+                        // For non-recurring entries or when no date is provided, update the main status
+                        return { ...en, status };
+                    }),
                 });
             },
             removeEntry: (id) => {

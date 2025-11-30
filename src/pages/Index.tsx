@@ -139,8 +139,8 @@ const Index = () => {
     addEntry(newEntry);
   };
 
-  const handleStatusChange = (id: string, status: EntryStatus) => {
-    setStatus(id, status);
+  const handleStatusChange = (id: string, status: EntryStatus, displayDate?: string) => {
+    setStatus(id, status, displayDate);
   };
 
   const handleRemoveEntry = (id: string) => {
@@ -247,6 +247,15 @@ const Index = () => {
           }
         }
         return false;
+      })
+      .map((e) => {
+        // For recurring entries, use date-specific status if available, otherwise use main status
+        let entry = e;
+        if (e.recurring && e.statusByDate && e.statusByDate[targetDateStr] !== undefined) {
+          entry = { ...e, status: e.statusByDate[targetDateStr] };
+        }
+        // Add display date for status updates (temporary field, not persisted)
+        return { ...entry, _displayDate: targetDateStr };
       })
       .sort((a, b) => parseTime(a.time) - parseTime(b.time));
   }, []);

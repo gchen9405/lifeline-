@@ -17,6 +17,7 @@ export interface TimelineEntryData {
   provider?: string;
   date: string;
   recurring?: string; // "daily", "weekly", or JSON string for structured recurrence
+  statusByDate?: Record<string, EntryStatus>; // Track status per date for recurring entries
 
   // Lab specific
   value?: string;
@@ -29,8 +30,8 @@ export interface TimelineEntryData {
 }
 
 interface TimelineEntryProps {
-  entry: TimelineEntryData;
-  onStatusChange: (id: string, newStatus: EntryStatus) => void;
+  entry: TimelineEntryData & { _displayDate?: string };
+  onStatusChange: (id: string, newStatus: EntryStatus, displayDate?: string) => void;
   onEdit: (id: string) => void;
   onRemove: (id: string) => void;
   isLast?: boolean;
@@ -125,7 +126,7 @@ export const TimelineEntry = ({ entry, onStatusChange, onEdit, onRemove, isLast 
               {isToggleable && statusToggle.label && (
                 <button
                   type="button"
-                  onClick={() => onStatusChange(entry.id, statusToggle.next)}
+                  onClick={() => onStatusChange(entry.id, statusToggle.next, entry._displayDate)}
                   className="text-xs font-semibold text-slate-500 hover:text-slate-900"
                 >
                   {statusToggle.label}
