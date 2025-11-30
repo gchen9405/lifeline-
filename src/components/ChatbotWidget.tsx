@@ -75,7 +75,7 @@ export function ChatInterface({ className }: { className?: string }) {
   };
 
   return (
-    <div className={cn("flex flex-col h-full w-full", className)}>
+    <div className={cn("flex flex-col w-full min-h-0", className)}>
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((m, i) => (
           <div
