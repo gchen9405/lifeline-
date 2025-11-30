@@ -4,22 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useEntriesStore } from "@/store/entries";
-
-interface Message {
-  text: string;
-  sender: "user" | "bot";
-}
+import { useChatStore, Message } from "@/store/chat";
 
 export function ChatInterface({ className }: { className?: string }) {
   const entries = useEntriesStore((s) => s.entries);
   const [currentMessage, setCurrentMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      sender: "bot",
-      text: "Hi, I’m Leo, your AI health assistant. How can I help you today?",
-    },
-  ]);
+
+  const messages = useChatStore((s) => s.messages);
+  const addMessage = useChatStore((s) => s.addMessage);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,8 +26,10 @@ export function ChatInterface({ className }: { className?: string }) {
     const q = currentMessage.trim();
     if (!q || isLoading) return;
 
-    setMessages((prev) => [...prev, { sender: "user", text: q }]);
+    addMessage({ sender: "user", text: q });
+    // We need to construct the new history for the API call including the message we just added
     const newMessages: Message[] = [...messages, { sender: "user", text: q }];
+
     setCurrentMessage("");
     setIsLoading(true);
 
@@ -56,19 +52,13 @@ export function ChatInterface({ className }: { className?: string }) {
         throw new Error(`API request failed with status ${response.status}`);
 
       const data = await response.json();
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: data.reply ?? "Sorry, I couldn't respond." },
-      ]);
+      addMessage({ sender: "bot", text: data.reply ?? "Sorry, I couldn't respond." });
     } catch (e) {
       console.error("Failed to get bot response:", e);
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: "Sorry, I'm having trouble connecting. Please try again in a moment.",
-        },
-      ]);
+      addMessage({
+        sender: "bot",
+        text: "Sorry, I'm having trouble connecting. Please try again in a moment.",
+      });
     } finally {
       setIsLoading(false);
     }
