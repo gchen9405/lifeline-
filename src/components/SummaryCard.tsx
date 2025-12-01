@@ -194,9 +194,11 @@ export function SummaryCard({ entries, onImport }: SummaryCardProps) {
           <ImportDialog
             onImport={onImport}
             buttonClassName="gap-2"
+            variant="outline"
+            size="sm"
             triggerContent={
               <>
-                <FileText className="mr-2 h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 Import
               </>
             }

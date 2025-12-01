@@ -58,23 +58,23 @@ const STATUS_ICONS: Record<EntryStatus, LucideIcon> = {
 const TYPE_CONFIG: Record<EntryType, { icon: LucideIcon; accent: string; indicator: string }> = {
   medication: {
     icon: Pill,
-    accent: "text-white",
-    indicator: "bg-blue-500 border-blue-600",
+    accent: "text-blue-600",
+    indicator: "bg-blue-100 border-blue-200",
   },
   appointment: {
     icon: Stethoscope,
-    accent: "text-white",
-    indicator: "bg-purple-500 border-purple-600",
+    accent: "text-purple-600",
+    indicator: "bg-purple-100 border-purple-200",
   },
   lab: {
     icon: FlaskConical,
-    accent: "text-white",
-    indicator: "bg-amber-500 border-amber-600",
+    accent: "text-amber-600",
+    indicator: "bg-amber-100 border-amber-200",
   },
   generic: {
     icon: StickyNote,
-    accent: "text-white",
-    indicator: "bg-slate-500 border-slate-600",
+    accent: "text-slate-600",
+    indicator: "bg-slate-100 border-slate-200",
   },
 };
 

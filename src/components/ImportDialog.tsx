@@ -18,9 +18,11 @@ interface ImportDialogProps {
     onImport: (entries: Omit<TimelineEntryData, "id">[]) => void;
     buttonClassName?: string;
     triggerContent?: React.ReactNode;
+    variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+    size?: "default" | "sm" | "lg" | "icon";
 }
 
-export function ImportDialog({ onImport, buttonClassName, triggerContent }: ImportDialogProps) {
+export function ImportDialog({ onImport, buttonClassName, triggerContent, variant, size }: ImportDialogProps) {
     const [open, setOpen] = useState(false);
     const [text, setText] = useState("");
     const [file, setFile] = useState<File | null>(null);
@@ -103,10 +105,10 @@ export function ImportDialog({ onImport, buttonClassName, triggerContent }: Impo
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className={buttonClassName}>
+                <Button className={buttonClassName} variant={variant} size={size}>
                     {triggerContent || (
                         <>
-                            <Upload className="mr-2 h-4 w-4" />
+                            <Upload className="h-4 w-4" />
                             Import
                         </>
                     )}
