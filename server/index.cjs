@@ -201,7 +201,7 @@ app.post("/api/import", async (req, res) => {
             });
         }
 
-        const MODEL = "gemini-1.5-flash"; // Multimodal model
+        const MODEL = "gemini-2.5-flash"; // Multimodal model
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
 
         const resp = await fetch(url, {
