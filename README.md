@@ -12,7 +12,7 @@ Backend: we will not be making a true backend
 AI Integration: Google Gemini 2.5 Flash Lite
 
 ### Acknowledgements
-- We utilized AI tools including ChatGPT and Gemini to generate starter code and debug.
+- We utilized AI tools, particularly ChatGPT and Gemini, to generate starter code and debug.
 
 ## Using the application
 

@@ -1,12 +1,19 @@
 import { useEffect, useRef } from "react";
 import { useEntriesStore } from "@/store/entries";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import { differenceInMinutes, parseISO } from "date-fns";
 import { BellRing } from "lucide-react";
 
 const REMINDER_THRESHOLD_MINUTES = 15;
 const CHECK_INTERVAL_MS = 60 * 1000; // Check every minute
 
+const convertTo24Hour = (timeStr: string): string => {
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = (parseInt(hours, 10) + 12).toString();
+    return `${hours.padStart(2, '0')}:${minutes}`;
+};
 /**
  * A system that runs in the background to check for upcoming events
  * and sends reminders to the user.
@@ -39,7 +46,8 @@ export function ReminderSystem() {
                     continue;
                 }
 
-                const entryDateTime = parseISO(`${entry.date}T${entry.time}`);
+                const time24 = convertTo24Hour(entry.time);
+                const entryDateTime = parseISO(`${entry.date}T${time24}`);
                 const minutesUntilEntry = differenceInMinutes(entryDateTime, now);
 
                 if (minutesUntilEntry > 0 && minutesUntilEntry <= REMINDER_THRESHOLD_MINUTES) {
